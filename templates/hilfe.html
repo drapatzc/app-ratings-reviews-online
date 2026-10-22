@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:">
+<title data-de="Hilfe: Einrichtung und Bedienung" data-en="Help: setup and usage">Hilfe: Einrichtung und Bedienung</title>
+<style>
+/*__STYLE__*/
+/*__PAGE_STYLE__*/
+</style>
+</head>
+<body>
+<nav><div class="in">
+  <div class="brand"><span class="logo"></span><span class="t">App-Feedback</span></div>
+  <div class="links"><a class="back" href="index.html"><span lang="de">← Zurück zum Bericht</span><span lang="en">← Back to report</span></a><a href="#ablauf"><span lang="de">Ablauf</span><span lang="en">Steps</span></a><a href="#install"><span lang="de">Installation</span><span lang="en">Install</span></a><a href="#apple">Apple</a><a href="#google">Google</a><a href="#config"><span lang="de">Konfiguration</span><span lang="en">Configuration</span></a><a href="#dateien"><span lang="de">Dateien</span><span lang="en">Files</span></a><a href="#befehle"><span lang="de">Befehle</span><span lang="en">Commands</span></a><a href="#menues"><span lang="de">Menüs</span><span lang="en">Menus</span></a><a href="#betrieb"><span lang="de">Betrieb</span><span lang="en">Operation</span></a><a href="#fehler"><span lang="de">Fehler</span><span lang="en">Errors</span></a></div>
+  <span class="langs" id="langs" role="group" aria-label="Sprache / Language"><button type="button" data-lang="de" aria-pressed="true">DE</button><span>|</span><button type="button" data-lang="en" aria-pressed="false">EN</button></span>
+  <button id="theme" class="iconbtn" type="button" aria-label="Farbschema wechseln / Switch theme" title="Hell / Dunkel">◐</button>
+</div></nav>
+<main class="doc">
+<div lang="de">
+  <header class="head" id="hilfe">
+    <div class="top"><div><h1>Hilfe: Einrichtung und Bedienung</h1><p>Alles für die Inbetriebnahme auf einer Seite: Zugänge, Konfiguration, Befehle, Menüs. Ausführlich in <code>README.md</code>, <code>EINRICHTUNG.md</code> und <code>BETRIEB.md</code> im Projektordner.</p></div></div>
+  </header>
+
+  <section class="card" id="ablauf">
+    <h2>Ablauf in sechs Schritten</h2>
+    <div class="steps">
+      <div class="step"><b>1. Installieren</b><span>Python 3.10+, Projekt kopieren, <code>.venv</code> anlegen, Selbsttest.</span></div>
+      <div class="step"><b>2. Apple-Zugang</b><span>Team-Schlüssel (.p8), Issuer ID, Key ID, App-IDs, Analytics-Berichtsanfrage.</span></div>
+      <div class="step"><b>3. Google-Zugang</b><span>Nur bei Android: Service Account (JSON), in Play Console einladen, Paketnamen.</span></div>
+      <div class="step"><b>4. Konfigurieren</b><span><code>config/config.json</code>: Kunden, Zugangsdaten, Apps. Schlüssel nach <code>keys/</code>.</span></div>
+      <div class="step"><b>5. Prüfen</b><span><code>./ratings.sh apps</code>, <code>dry-run</code>, dann <code>fetch</code>, <code>stability</code>, <code>testdata</code>, <code>report</code>.</span></div>
+      <div class="step"><b>6. Automatisieren</b><span>Täglich <code>./ratings.sh daily</code> per cron oder systemd; Bericht bereitstellen; Backup.</span></div>
+    </div>
+  </section>
+
+  <section class="card" id="install">
+    <h2>Voraussetzungen und Installation</h2>
+    <ul>
+      <li><b>System:</b> Linux (empfohlen), macOS oder Windows. Python 3.10 oder neuer, dazu <code>venv</code> und <code>pip</code>. Einzige Abhängigkeit: <code>cryptography</code>. Keine Datenbank, kein Server.</li>
+      <li><b>Netz:</b> ausgehendes HTTPS zu <code>api.appstoreconnect.apple.com</code>, <code>itunes.apple.com</code>, <code>androidpublisher.googleapis.com</code>, <code>oauth2.googleapis.com</code>, <code>playdeveloperreporting.googleapis.com</code> und Apples Download-Hosts für Analytics-Berichte. Kein eingehender Port. Proxy über <code>HTTPS_PROXY</code>.</li>
+      <li><b>Zeitplaner:</b> cron oder systemd-Timer. Ein täglicher Lauf ist Pflicht, weil Google nur sieben Tage rückwirkend liefert.</li>
+    </ul>
+<pre><code>git clone &lt;repo-url&gt; ~/app-ratings-reviews      # oder Ordner kopieren (ohne data/, reports/, config.json)
+cd ~/app-ratings-reviews
+python3 -m venv .venv &amp;&amp; .venv/bin/pip install -r requirements.txt
+cp config/config.example.json config/config.json
+mkdir -p keys &amp;&amp; chmod 700 keys &amp;&amp; chmod 600 config/config.json
+./ratings.sh test                                  # Selbsttest, installiert pytest beim ersten Mal</code></pre>
+    <p class="note"><code>ratings.sh</code>, <code>menu.sh</code> und <code>kurzmenu.sh</code> richten das <code>.venv</code> beim ersten Start selbst ein; ein manuelles <code>source</code> ist nicht nötig. Auf einem Server das Projekt unter einem eigenen Benutzer (z. B. <code>ratings</code>) ablegen.</p>
+  </section>
+
+  <section class="card" id="apple">
+    <h2>Apple: App Store Connect einrichten</h2>
+    <h3>Was beantragt werden muss (je Entwicklerkonto)</h3>
+    <ol>
+      <li>App Store Connect → <b>Benutzer und Zugriff</b> → <b>Integrationen</b> → <b>App Store Connect API</b> → <b>Team-Schlüssel</b> erzeugen. Kein „Individual Key“. Das darf nur der Account-Inhaber oder ein Admin.</li>
+      <li><b>Rolle:</b> „App-Manager“ (nötig für Stabilität und TestFlight). Nur für Rezensionen reicht „Kundensupport“.</li>
+      <li>Herunterladen und übergeben: die Datei <code>AuthKey_&lt;KeyID&gt;.p8</code> (nur einmal herunterladbar!), die <b>Issuer ID</b> und die <b>Key ID</b>.</li>
+      <li>Für Stabilitätsdaten je App einmalig eine <b>Analytics-Berichtsanfrage</b> mit Zugriffsart <code>ONGOING</code> in App Store Connect anlegen. Daten gibt es erst ab diesem Zeitpunkt.</li>
+      <li>Die numerischen <b>App-IDs</b> notieren (App Store Connect → App → App-Informationen → Apple-ID, oder aus der Store-URL <code>id1234567890</code>).</li>
+    </ol>
+    <h3>So sehen die Zugangsdaten aus</h3>
+    <div class="tablewrap" style="max-height:none"><table><thead><tr><th>Wert</th><th>Form</th><th>Wo in der Konfiguration</th></tr></thead><tbody>
+      <tr><td>Issuer ID</td><td>UUID, z. B. <code>11111111-2222-3333-4444-555555555555</code></td><td><code>credentials.apple.issuerId</code></td></tr>
+      <tr><td>Key ID</td><td>10 Zeichen, z. B. <code>ABC123DEFG</code>, steht im Dateinamen der .p8</td><td><code>credentials.apple.keyId</code></td></tr>
+      <tr><td>Privater Schlüssel</td><td>Datei <code>AuthKey_ABC123DEFG.p8</code> (Text, beginnt mit <code>-----BEGIN PRIVATE KEY-----</code>)</td><td><code>credentials.apple.privateKeyFile</code> (Pfad) oder <code>privateKeyEnvironmentVariable</code> (Name einer Umgebungsvariable mit Pfad oder Schlüsseltext)</td></tr>
+      <tr><td>App-ID</td><td>Zahl, z. B. <code>1540650069</code></td><td><code>apps[].platforms.apple.appId</code></td></tr>
+    </tbody></table></div>
+    <p class="note">Aus Issuer ID, Key ID und Schlüssel erzeugt das Programm selbst ein kurzlebiges Token (ES256, 15 Minuten). Es muss nichts von Hand erzeugt werden. Alle Aufrufe sind nur lesend. Der Schlüsseltext darf nie in <code>config.json</code> stehen; das Programm lehnt das ab.</p>
+  </section>
+
+  <section class="card" id="google">
+    <h2>Google: Play Console einrichten (nur bei Android-Apps)</h2>
+    <ol>
+      <li>In einem eigenen Google-Cloud-Projekt (eines reicht für alle Kunden) einen <b>Service Account</b> anlegen und einen <b>JSON-Schlüssel</b> erzeugen.</li>
+      <li>APIs aktivieren: <b>Google Play Android Developer API</b>; für Absturzraten zusätzlich <b>Google Play Developer Reporting API</b>.</li>
+      <li>Der Inhaber der Play Console lädt die <b>E-Mail-Adresse des Service Accounts</b> ein (Nutzer und Berechtigungen) mit den Rechten: „App-Informationen anzeigen (nur lesend)“, „Rezensionen anzeigen“, optional „Statistiken zur App-Qualität“. Wirkung bis zu 48 Stunden verzögert.</li>
+      <li>Die <b>Paketnamen</b> notieren (z. B. <code>de.firma.app</code>, aus der Play-Store-URL <code>id=…</code>).</li>
+    </ol>
+    <div class="tablewrap" style="max-height:none"><table><thead><tr><th>Wert</th><th>Form</th><th>Wo in der Konfiguration</th></tr></thead><tbody>
+      <tr><td>Service-Account-Schlüssel</td><td>JSON-Datei mit <code>client_email</code>, <code>private_key</code>, <code>token_uri</code></td><td><code>credentials.google.serviceAccountFile</code> (Pfad) oder <code>serviceAccountEnvironmentVariable</code></td></tr>
+      <tr><td>Paketname</td><td>z. B. <code>de.firma.app</code></td><td><code>apps[].platforms.google.packageName</code></td></tr>
+    </tbody></table></div>
+    <p class="note">Keine Android-Apps: bei der Plattform <code>"enabled": false</code> setzen oder den Eintrag weglassen. Google liefert nur Rezensionen der letzten sieben Tage; ältere Daten über <code>./ratings.sh import-csv</code> aus einem Play-Console-Export. Die Google-Anbindung ist implementiert, aber noch nicht im Betrieb geprüft.</p>
+  </section>
+
+  <section class="card" id="config">
+    <h2>Konfiguration: <code>config/config.json</code></h2>
+    <p>Ein Kunde = ein Eintrag in <code>customers</code> mit eigenen Zugangsdaten und seiner App-Liste. Die <code>id</code> wird zum Ordnernamen unter <code>data/customers/</code> und darf später nicht mehr geändert werden (Buchstaben, Ziffern, <code>. _ -</code>).</p>
+<pre><code>{
+  "schemaVersion": 1,
+  "settings": { "minRefreshMinutes": 30, "fullSyncIntervalDays": 30, "overlapDays": 7, "logLevel": "INFO" },
+  "customers": [
+    {
+      "id": "kunde-a", "name": "Kunde A", "enabled": true,
+      "credentials": {
+        "apple":  { "issuerId": "11111111-2222-3333-4444-555555555555", "keyId": "ABC123DEFG", "privateKeyFile": "./keys/kunde-a.p8" },
+        "google": { "serviceAccountFile": "./keys/kunde-a-google.json" }
+      },
+      "apps": [
+        { "id": "meine-app", "name": "Meine App", "enabled": true, "platforms": {
+            "apple":  { "enabled": true, "appId": "1234567890", "countries": [], "ratingCountries": ["DE"] },
+            "google": { "enabled": false, "packageName": "de.firma.app", "languages": [] } } }
+      ]
+    }
+  ]
+}</code></pre>
+    <ul>
+      <li><b>Je Kunde eigene <code>credentials</code></b>, weil Apple-Schlüssel an das Entwicklerkonto gebunden sind. Mehrere Kunden unter einem Konto: denselben Schlüssel bei jedem eintragen. Ein Google-Service-Account kann in mehrere Play Consoles eingeladen werden.</li>
+      <li><b><code>ratingCountries</code>:</b> Länder, für die die offizielle Store-Note geholt wird (eine Anfrage je App und Land pro Lauf; <code>[]</code> = aus). <code>countries</code> bei Apple und <code>languages</code> bei Google leer lassen (alle).</li>
+      <li><b>Umgebungsvariablen statt Dateien:</b> <code>privateKeyEnvironmentVariable</code> bzw. <code>serviceAccountEnvironmentVariable</code> nennen den Namen der Variable (Inhalt: Pfad oder Schlüsseltext). Praktisch für CI.</li>
+    </ul>
+    <div class="tablewrap" style="max-height:none"><table><thead><tr><th>Einstellung</th><th>Bedeutung</th><th>Standard</th></tr></thead><tbody>
+      <tr><td><code>outputDirectory</code>, <code>reportDirectory</code></td><td>Ordner für Daten und Bericht</td><td><code>./data</code>, <code>./reports</code></td></tr>
+      <tr><td><code>minRefreshMinutes</code></td><td>so lange nach einem Erfolg keine API-Aufrufe (<code>force</code> übergeht)</td><td>30</td></tr>
+      <tr><td><code>fullSyncIntervalDays</code></td><td>Abstand, nach dem automatisch wieder vollständig gelesen wird</td><td>30</td></tr>
+      <tr><td><code>overlapDays</code></td><td>Sicherheitsüberlappung beim Abruf (Apple)</td><td>7</td></tr>
+      <tr><td><code>incrementalSync</code></td><td>inkrementell als Standard</td><td><code>true</code></td></tr>
+      <tr><td><code>defaultStartDate</code>, <code>defaultEndDate</code></td><td>Grenzen für vollständige Abrufe (nach Erstellungsdatum)</td><td><code>null</code></td></tr>
+      <tr><td><code>requestTimeoutSeconds</code>, <code>maxRetries</code></td><td>Timeout und Wiederholungen bei 429, 5xx, Netzwerkfehlern</td><td>30, 3</td></tr>
+      <tr><td><code>fetchAppleVersions</code>, <code>logLevel</code></td><td>Versionsliste holen; DEBUG, INFO, WARNING, ERROR</td><td><code>true</code>, <code>INFO</code></td></tr>
+    </tbody></table></div>
+  </section>
+
+  <section class="card" id="dateien">
+    <h2>Welche Dateien angelegt oder geändert werden</h2>
+    <div class="tablewrap" style="max-height:none"><table><thead><tr><th>Datei</th><th>Was</th><th>Rechte</th></tr></thead><tbody>
+      <tr><td><code>config/config.json</code></td><td>aus <code>config.example.json</code> kopieren, Kunden und Apps eintragen</td><td><code>600</code>, nie ins Repository</td></tr>
+      <tr><td><code>keys/*.p8</code></td><td>Apple-Team-Schlüssel je Kunde (Original-Dateiname oder umbenannt, Key ID steht in der Konfiguration)</td><td><code>600</code>, Ordner <code>700</code>, nie ins Repository</td></tr>
+      <tr><td><code>keys/*-google.json</code></td><td>Google-Service-Account-Schlüssel je Kunde</td><td><code>600</code>, nie ins Repository</td></tr>
+      <tr><td><code>~/.zshrc</code> oder <code>/usr/local/bin/bew</code></td><td>optional: Alias oder Symlink auf <code>menu.sh</code>, damit das Menü von überall startet</td><td></td></tr>
+      <tr><td><code>crontab</code> oder systemd-Unit</td><td>täglicher Lauf (siehe Betrieb)</td><td></td></tr>
+    </tbody></table></div>
+    <p class="note">Das Programm selbst erzeugt <code>data/</code> (Rezensionen als JSON, bleibt dauerhaft), <code>reports/index.html</code> (Bericht), <code>reports/hilfe.html</code>, <code>impressum.html</code>, <code>datenschutz.html</code> (diese Seiten), <code>reports/markdown/</code> (Zusammenfassungen) und <code>backups/</code> (vor dem Löschen). Nichts davon ist im Repository. Es wird nie etwas gelöscht, außer bewusst über <code>./ratings.sh reset</code> mit Backup und Bestätigung <code>LOESCHEN</code>.</p>
+  </section>
+
+  <section class="card" id="befehle">
+    <h2>Befehle: <code>./ratings.sh</code></h2>
+    <p>Alle Funktionen über eine Datei. Englische Befehle; deutsche Aliasse in Klammern. <code>[opt]</code> = beliebige Optionen, z. B. <code>--customer kunde-a --app meine-app --platform apple</code>.</p>
+    <div class="tablewrap" style="max-height:none"><table><thead><tr><th>Befehl</th><th>Wirkung</th></tr></thead><tbody>
+      <tr><td><code>menu</code></td><td>großes Menü starten</td></tr>
+      <tr><td><code>fetch [opt]</code> (abrufen)</td><td>Rezensionen und Store-Kennzahlen abrufen; erstmals alles, danach nur Neues</td></tr>
+      <tr><td><code>full [opt]</code> (voll)</td><td>alles neu lesen (<code>--full-sync</code>), löscht nie</td></tr>
+      <tr><td><code>force [opt]</code></td><td>Wartefrist <code>minRefreshMinutes</code> ignorieren</td></tr>
+      <tr><td><code>dry-run [opt]</code> (probe)</td><td>Probelauf, nichts wird gespeichert; prüft die Zugänge</td></tr>
+      <tr><td><code>range VON BIS [opt]</code> (zeitraum)</td><td>nur diesen Zeitraum (YYYY-MM-DD)</td></tr>
+      <tr><td><code>stability [opt]</code> (stabilitaet)</td><td>Abstürze und Sitzungen aus Apple Analytics (erster Lauf 100 bis 150 Anfragen je App)</td></tr>
+      <tr><td><code>testdata [opt]</code> (testbetrieb)</td><td>Apple TestFlight und Google-Testspuren</td></tr>
+      <tr><td><code>all [opt]</code> (alles)</td><td>Rezensionen, Stabilität und Testbetrieb abrufen, Bericht erzeugen, Browser öffnen</td></tr>
+      <tr><td><code>daily [opt]</code> (taeglich)</td><td>für cron und CI: Abruf höchstens einmal pro Tag, Bericht immer neu</td></tr>
+      <tr><td><code>report</code> (bericht) / <code>open</code> (oeffnen)</td><td>Bericht erzeugen und öffnen / nur öffnen. <code>report --customer ID</code> ergibt einen Bericht nur für diesen Kunden</td></tr>
+      <tr><td><code>markdown</code></td><td>Markdown-Zusammenfassungen plus ZIP zum Versenden</td></tr>
+      <tr><td><code>status</code> / <code>apps</code></td><td>Status je App / konfigurierte Apps, beides ohne Netz</td></tr>
+      <tr><td><code>import-csv DATEI --customer ID --app ID</code> (csv)</td><td>Play-Console-Export importieren</td></tr>
+      <tr><td><code>reset [--customer ID --app ID] [--dry-run]</code> (zuruecksetzen)</td><td>Daten löschen und neu anfangen; Backup in <code>backups/</code> plus Bestätigung <code>LOESCHEN</code></td></tr>
+      <tr><td><code>test</code> (tests) / <code>backup</code> (sicherung)</td><td>Tests ausführen / <code>data/</code> als <code>.tgz</code> packen</td></tr>
+      <tr><td><code>help</code> (hilfe)</td><td>Übersicht aller Befehle</td></tr>
+    </tbody></table></div>
+    <h3>Empfohlene Reihenfolge beim ersten Mal</h3>
+<pre><code>./ratings.sh apps                      # alle Kunden und Apps gelistet?
+./ratings.sh dry-run                   # alle Zugänge prüfen, nichts speichern
+./ratings.sh fetch                     # erster Abruf der Rezensionen
+./ratings.sh stability                 # Apple Analytics (dauert beim ersten Mal)
+./ratings.sh testdata                  # TestFlight-Builds (eine Anfrage je Build)
+./ratings.sh report                    # Bericht erzeugen und öffnen
+./ratings.sh status                    # je App: ok, teilweise oder Fehler</code></pre>
+    <p class="note">Exit-Codes: 0 alles in Ordnung, 1 mindestens ein Ziel fehlgeschlagen oder teilweise, 2 Konfigurations- oder Aufruffehler. Direkt ohne Hülle: <code>python collect.py [Optionen]</code> und <code>python report.py [--customer ID] [--app ID] [--platform P]</code>.</p>
+  </section>
+
+  <section class="card" id="menues">
+    <h2>Die zwei Menüs</h2>
+    <p>Beide starten von jedem Ordner aus, richten das <code>.venv</code> beim ersten Mal ein und melden eine fehlende <code>config.json</code>. Tasten: Zahl = Auswahl, <code>H</code> = Hilfe zum jeweiligen Menü, <code>0</code> = eine Ebene zurück, <code>Q</code> = beenden. Oben stehen der letzte erfolgreiche Abruf, das Alter des Berichts und die aktuelle Auswahl. Jeder Befehl wird vor dem Start angezeigt; nach einer Ausgabe wartet das Menü auf Enter.</p>
+    <h3>Großes Menü: <code>menu.sh</code> (oder <code>./ratings.sh menu</code>)</h3>
+    <div class="tablewrap" style="max-height:none"><table><thead><tr><th>Nr.</th><th>Punkt</th><th>Wirkung</th></tr></thead><tbody>
+      <tr><td>1</td><td>Alles auf einmal</td><td>Rezensionen und Stabilität abrufen, Bericht erzeugen, Browser öffnen</td></tr>
+      <tr><td>2</td><td>Daten abrufen</td><td>automatisch, vollständig, Wartefrist ignorieren, Stabilität, Testbetrieb, beides, Probelauf, Zeitraum; „Bericht danach öffnen“ umschalten</td></tr>
+      <tr><td>3</td><td>Bericht erzeugen und öffnen</td><td>mit der aktuellen Auswahl (Kunde, App, Plattform)</td></tr>
+      <tr><td>4</td><td>Letzten Bericht nur öffnen</td><td>ohne Neuerzeugung</td></tr>
+      <tr><td>5</td><td>Auswahl ändern</td><td>Kunde, App, Plattform, Zeitraum; gilt für alle Abrufe und Berichte</td></tr>
+      <tr><td>6</td><td>Status und Übersicht</td><td>Status je App, konfigurierte Apps, Tests</td></tr>
+      <tr><td>7</td><td>Google-CSV importieren</td><td>Play-Console-Export; Kunde und App vorher unter 5 wählen</td></tr>
+      <tr><td>8</td><td>Markdown-Dateien</td><td>Dokumentation und 14-Tage-Zusammenfassungen im Browser oder Editor öffnen, neu erzeugen, ZIP zum Versenden</td></tr>
+      <tr><td>9</td><td>Daten löschen und neu anfangen</td><td>nur Auswahl oder alles; immer Backup und Rückfrage; Konfiguration und Schlüssel bleiben</td></tr>
+    </tbody></table></div>
+    <h3>Kurzmenü: <code>kurzmenu.sh</code></h3>
+    <div class="tablewrap" style="max-height:none"><table><thead><tr><th>Nr.</th><th>Punkt</th><th>Wirkung</th></tr></thead><tbody>
+      <tr><td>1</td><td>Alles abrufen</td><td>Rezensionen, Stabilität und Testbetrieb, danach Bericht und Markdown neu erzeugen (kein ZIP, kein Browser)</td></tr>
+      <tr><td>2</td><td>Status</td><td>Status je App, ohne Netz</td></tr>
+      <tr><td>3</td><td>Bericht anzeigen</td><td>im Browser öffnen; wird erzeugt, falls er fehlt</td></tr>
+    </tbody></table></div>
+    <p class="note">Kurzbefehl einrichten, damit <code>bew</code> das Menü von überall startet: <code>ln -s ~/app-ratings-reviews/menu.sh /usr/local/bin/bew</code> oder <code>echo "alias bew='~/app-ratings-reviews/menu.sh'" &gt;&gt; ~/.zshrc</code>. Eigener Editor für Markdown: <code>MD_EDITOR</code>, sonst <code>VISUAL</code> oder <code>EDITOR</code>.</p>
+  </section>
+
+  <section class="card" id="betrieb">
+    <h2>Täglicher Lauf, Bereitstellung, Backup</h2>
+    <ul>
+      <li><b>Zeitplan:</b> <code>./ratings.sh daily</code> einmal täglich. cron: <code>30 6 * * * cd /home/ratings/app-ratings-reviews &amp;&amp; ./ratings.sh daily &gt;&gt; logs-daily.txt 2&gt;&amp;1</code>. Fertige systemd-Units und die Varianten Mac, Windows und GitHub Actions stehen in <code>BETRIEB.md</code>.</li>
+      <li><b>Bereitstellung:</b> <code>reports/</code> ist statisch und ohne externe Abhängigkeiten. Per Webserver mit Passwort oder VPN freigeben, oder den Ordner auf ein Netzlaufwerk legen (<code>reportDirectory</code>). Nur <code>reports/</code> freigeben, nie <code>config/</code>, <code>data/</code> oder <code>keys/</code>.</li>
+      <li><b>Versand:</b> <code>./ratings.sh markdown</code> erzeugt je App eine Zusammenfassung der letzten 14 Tage und ein ZIP.</li>
+      <li><b>Backup:</b> <code>./ratings.sh backup</code> packt <code>data/</code>; zusätzlich <code>config/</code> und <code>keys/</code> in die Serversicherung aufnehmen.</li>
+      <li><b>Verantwortung:</b> jemand sieht bei Status „Fehler“ im Log nach; meist ist ein Schlüssel widerrufen oder abgelaufen.</li>
+    </ul>
+  </section>
+
+  <section class="card" id="fehler">
+    <h2>Typische Fehler</h2>
+    <div class="tablewrap" style="max-height:none"><table><thead><tr><th>Meldung</th><th>Ursache und Abhilfe</th></tr></thead><tbody>
+      <tr><td>HTTP 401 (Apple)</td><td>Issuer ID, Key ID und .p8 passen nicht zusammen, oder der Schlüssel ist widerrufen. Werte vergleichen, Key ID im Dateinamen prüfen.</td></tr>
+      <tr><td>HTTP 403 (Apple)</td><td>Rolle zu niedrig. Stabilität und TestFlight brauchen „App-Manager“.</td></tr>
+      <tr><td>HTTP 404 oder leere Antwort</td><td>App-ID oder Paketname falsch getippt.</td></tr>
+      <tr><td>„Keine laufende Analytics-Berichtsanfrage“</td><td>In App Store Connect je App eine Berichtsanfrage (ONGOING) anlegen; Daten erst ab dann.</td></tr>
+      <tr><td>Google 400 oder 401 beim Token</td><td>Service-Account-JSON falsch oder noch nicht in die Play Console eingeladen (bis 48 Stunden Verzögerung).</td></tr>
+      <tr><td>„Konfiguration abgelehnt“</td><td>Pflichtfeld fehlt, Schlüsseltext direkt in <code>config.json</code>, oder Google aktiviert ohne Zugangsdaten.</td></tr>
+      <tr><td>Keine neuen Daten trotz Abruf</td><td>Wartefrist <code>minRefreshMinutes</code> aktiv; <code>./ratings.sh force</code> übergeht sie.</td></tr>
+    </tbody></table></div>
+    <p class="note">Logs und Fehlermeldungen enthalten nie Schlüssel oder Tokens. Bei allem Weiteren: <code>H</code> im Menü, <code>README.md</code>, <code>TECHNIK.md</code>, <code>EINRICHTUNG.md</code>.</p>
+  </section>
+</div>
+
+<div lang="en">
+  <header class="head">
+    <div class="top"><div><h1>Help: setup and usage</h1><p>Everything needed to get started on one page: access, configuration, commands, menus. Full details in <code>README.md</code>, <code>EINRICHTUNG.md</code> and <code>BETRIEB.md</code> in the project folder (German).</p></div></div>
+  </header>
+
+  <section class="card">
+    <h2>Six steps</h2>
+    <div class="steps">
+      <div class="step"><b>1. Install</b><span>Python 3.10+, copy the project, create <code>.venv</code>, run the self-test.</span></div>
+      <div class="step"><b>2. Apple access</b><span>Team key (.p8), Issuer ID, Key ID, app IDs, analytics report request.</span></div>
+      <div class="step"><b>3. Google access</b><span>Android only: service account (JSON), invite it to the Play Console, package names.</span></div>
+      <div class="step"><b>4. Configure</b><span><code>config/config.json</code>: customers, credentials, apps. Keys go to <code>keys/</code>.</span></div>
+      <div class="step"><b>5. Verify</b><span><code>./ratings.sh apps</code>, <code>dry-run</code>, then <code>fetch</code>, <code>stability</code>, <code>testdata</code>, <code>report</code>.</span></div>
+      <div class="step"><b>6. Automate</b><span>Daily <code>./ratings.sh daily</code> via cron or systemd; publish the report; back up.</span></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Requirements and installation</h2>
+    <ul>
+      <li><b>System:</b> Linux (recommended), macOS or Windows. Python 3.10 or newer with <code>venv</code> and <code>pip</code>. Only dependency: <code>cryptography</code>. No database, no server.</li>
+      <li><b>Network:</b> outbound HTTPS to <code>api.appstoreconnect.apple.com</code>, <code>itunes.apple.com</code>, <code>androidpublisher.googleapis.com</code>, <code>oauth2.googleapis.com</code>, <code>playdeveloperreporting.googleapis.com</code> and Apple’s download hosts for analytics reports. No inbound port. Proxy via <code>HTTPS_PROXY</code>.</li>
+      <li><b>Scheduler:</b> cron or a systemd timer. A daily run is mandatory because Google only returns the last seven days.</li>
+    </ul>
+<pre><code>git clone &lt;repo-url&gt; ~/app-ratings-reviews      # or copy the folder (without data/, reports/, config.json)
+cd ~/app-ratings-reviews
+python3 -m venv .venv &amp;&amp; .venv/bin/pip install -r requirements.txt
+cp config/config.example.json config/config.json
+mkdir -p keys &amp;&amp; chmod 700 keys &amp;&amp; chmod 600 config/config.json
+./ratings.sh test                                  # self-test, installs pytest on first use</code></pre>
+    <p class="note"><code>ratings.sh</code>, <code>menu.sh</code> and <code>kurzmenu.sh</code> set up the <code>.venv</code> on first start; no manual <code>source</code> needed. On a server, keep the project under its own user (e.g. <code>ratings</code>).</p>
+  </section>
+
+  <section class="card">
+    <h2>Apple: setting up App Store Connect</h2>
+    <h3>What to request (per developer account)</h3>
+    <ol>
+      <li>App Store Connect → <b>Users and Access</b> → <b>Integrations</b> → <b>App Store Connect API</b> → generate a <b>Team key</b>. Not an “Individual Key”. Only the Account Holder or an Admin can do this.</li>
+      <li><b>Role:</b> “App Manager” (required for stability and TestFlight). For reviews alone, “Customer Support” is enough.</li>
+      <li>Download and hand over: the file <code>AuthKey_&lt;KeyID&gt;.p8</code> (can only be downloaded once!), the <b>Issuer ID</b> and the <b>Key ID</b>.</li>
+      <li>For stability data, create one <b>analytics report request</b> per app with access type <code>ONGOING</code> in App Store Connect. Data exists only from that moment on.</li>
+      <li>Note the numeric <b>app IDs</b> (App Store Connect → App → App Information → Apple ID, or from the store URL <code>id1234567890</code>).</li>
+    </ol>
+    <h3>What the credentials look like</h3>
+    <div class="tablewrap" style="max-height:none"><table><thead><tr><th>Value</th><th>Form</th><th>Where in the configuration</th></tr></thead><tbody>
+      <tr><td>Issuer ID</td><td>UUID, e.g. <code>11111111-2222-3333-4444-555555555555</code></td><td><code>credentials.apple.issuerId</code></td></tr>
+      <tr><td>Key ID</td><td>10 characters, e.g. <code>ABC123DEFG</code>, part of the .p8 file name</td><td><code>credentials.apple.keyId</code></td></tr>
+      <tr><td>Private key</td><td>File <code>AuthKey_ABC123DEFG.p8</code> (text, starts with <code>-----BEGIN PRIVATE KEY-----</code>)</td><td><code>credentials.apple.privateKeyFile</code> (path) or <code>privateKeyEnvironmentVariable</code> (name of an environment variable holding a path or the key text)</td></tr>
+      <tr><td>App ID</td><td>Number, e.g. <code>1540650069</code></td><td><code>apps[].platforms.apple.appId</code></td></tr>
+    </tbody></table></div>
+    <p class="note">The tool creates a short-lived token itself from Issuer ID, Key ID and key (ES256, 15 minutes). Nothing has to be generated by hand. All calls are read-only. The key text must never be placed in <code>config.json</code>; the tool rejects that.</p>
+  </section>
+
+  <section class="card">
+    <h2>Google: setting up the Play Console (Android apps only)</h2>
+    <ol>
+      <li>In your own Google Cloud project (one is enough for all customers) create a <b>service account</b> and generate a <b>JSON key</b>.</li>
+      <li>Enable the APIs: <b>Google Play Android Developer API</b>; for crash rates also <b>Google Play Developer Reporting API</b>.</li>
+      <li>The Play Console owner invites the <b>service account’s e-mail address</b> (Users and permissions) with: “View app information (read-only)”, “View reviews”, optionally “View app quality statistics”. Takes effect after up to 48 hours.</li>
+      <li>Note the <b>package names</b> (e.g. <code>de.firma.app</code>, from the Play Store URL <code>id=…</code>).</li>
+    </ol>
+    <div class="tablewrap" style="max-height:none"><table><thead><tr><th>Value</th><th>Form</th><th>Where in the configuration</th></tr></thead><tbody>
+      <tr><td>Service account key</td><td>JSON file with <code>client_email</code>, <code>private_key</code>, <code>token_uri</code></td><td><code>credentials.google.serviceAccountFile</code> (path) or <code>serviceAccountEnvironmentVariable</code></td></tr>
+      <tr><td>Package name</td><td>e.g. <code>de.firma.app</code></td><td><code>apps[].platforms.google.packageName</code></td></tr>
+    </tbody></table></div>
+    <p class="note">No Android apps: set <code>"enabled": false</code> for the platform or omit the entry. Google returns only reviews from the last seven days; older data via <code>./ratings.sh import-csv</code> from a Play Console export. The Google integration is implemented but not yet verified in production.</p>
+  </section>
+
+  <section class="card">
+    <h2>Configuration: <code>config/config.json</code></h2>
+    <p>One customer = one entry in <code>customers</code> with its own credentials and app list. The <code>id</code> becomes the folder name under <code>data/customers/</code> and must not be changed later (letters, digits, <code>. _ -</code>).</p>
+<pre><code>{
+  "schemaVersion": 1,
+  "settings": { "minRefreshMinutes": 30, "fullSyncIntervalDays": 30, "overlapDays": 7, "logLevel": "INFO" },
+  "customers": [
+    {
+      "id": "customer-a", "name": "Customer A", "enabled": true,
+      "credentials": {
+        "apple":  { "issuerId": "11111111-2222-3333-4444-555555555555", "keyId": "ABC123DEFG", "privateKeyFile": "./keys/customer-a.p8" },
+        "google": { "serviceAccountFile": "./keys/customer-a-google.json" }
+      },
+      "apps": [
+        { "id": "my-app", "name": "My App", "enabled": true, "platforms": {
+            "apple":  { "enabled": true, "appId": "1234567890", "countries": [], "ratingCountries": ["DE"] },
+            "google": { "enabled": false, "packageName": "de.firma.app", "languages": [] } } }
+      ]
+    }
+  ]
+}</code></pre>
+    <ul>
+      <li><b>Separate <code>credentials</code> per customer</b>, because Apple keys are bound to the developer account. Several customers under one account: enter the same key for each. One Google service account can be invited to several Play Consoles.</li>
+      <li><b><code>ratingCountries</code>:</b> countries for which the official store rating is fetched (one request per app and country per run; <code>[]</code> = off). Leave <code>countries</code> (Apple) and <code>languages</code> (Google) empty for all.</li>
+      <li><b>Environment variables instead of files:</b> <code>privateKeyEnvironmentVariable</code> and <code>serviceAccountEnvironmentVariable</code> name the variable (content: path or key text). Handy for CI.</li>
+    </ul>
+    <div class="tablewrap" style="max-height:none"><table><thead><tr><th>Setting</th><th>Meaning</th><th>Default</th></tr></thead><tbody>
+      <tr><td><code>outputDirectory</code>, <code>reportDirectory</code></td><td>folders for data and report</td><td><code>./data</code>, <code>./reports</code></td></tr>
+      <tr><td><code>minRefreshMinutes</code></td><td>no API calls for this long after a success (<code>force</code> overrides)</td><td>30</td></tr>
+      <tr><td><code>fullSyncIntervalDays</code></td><td>interval after which a full read happens automatically</td><td>30</td></tr>
+      <tr><td><code>overlapDays</code></td><td>safety overlap when fetching (Apple)</td><td>7</td></tr>
+      <tr><td><code>incrementalSync</code></td><td>incremental by default</td><td><code>true</code></td></tr>
+      <tr><td><code>defaultStartDate</code>, <code>defaultEndDate</code></td><td>limits for full fetches (by creation date)</td><td><code>null</code></td></tr>
+      <tr><td><code>requestTimeoutSeconds</code>, <code>maxRetries</code></td><td>timeout and retries on 429, 5xx, network errors</td><td>30, 3</td></tr>
+      <tr><td><code>fetchAppleVersions</code>, <code>logLevel</code></td><td>fetch version list; DEBUG, INFO, WARNING, ERROR</td><td><code>true</code>, <code>INFO</code></td></tr>
+    </tbody></table></div>
+  </section>
+
+  <section class="card">
+    <h2>Which files are created or changed</h2>
+    <div class="tablewrap" style="max-height:none"><table><thead><tr><th>File</th><th>What</th><th>Permissions</th></tr></thead><tbody>
+      <tr><td><code>config/config.json</code></td><td>copy from <code>config.example.json</code>, enter customers and apps</td><td><code>600</code>, never in the repository</td></tr>
+      <tr><td><code>keys/*.p8</code></td><td>Apple team key per customer (original file name or renamed; the Key ID is in the configuration)</td><td><code>600</code>, folder <code>700</code>, never in the repository</td></tr>
+      <tr><td><code>keys/*-google.json</code></td><td>Google service account key per customer</td><td><code>600</code>, never in the repository</td></tr>
+      <tr><td><code>~/.zshrc</code> or <code>/usr/local/bin/bew</code></td><td>optional: alias or symlink to <code>menu.sh</code> so the menu starts from anywhere</td><td></td></tr>
+      <tr><td><code>crontab</code> or systemd unit</td><td>daily run (see Operation)</td><td></td></tr>
+    </tbody></table></div>
+    <p class="note">The tool itself creates <code>data/</code> (reviews as JSON, kept permanently), <code>reports/index.html</code> (report), <code>reports/hilfe.html</code>, <code>impressum.html</code>, <code>datenschutz.html</code> (these pages), <code>reports/markdown/</code> (summaries) and <code>backups/</code> (before deleting). None of it is in the repository. Nothing is ever deleted except deliberately via <code>./ratings.sh reset</code> with backup and confirmation <code>LOESCHEN</code>.</p>
+  </section>
+
+  <section class="card">
+    <h2>Commands: <code>./ratings.sh</code></h2>
+    <p>All functions through one file. English commands; German aliases in brackets. <code>[opt]</code> = any options, e.g. <code>--customer customer-a --app my-app --platform apple</code>.</p>
+    <div class="tablewrap" style="max-height:none"><table><thead><tr><th>Command</th><th>Effect</th></tr></thead><tbody>
+      <tr><td><code>menu</code></td><td>start the main menu</td></tr>
+      <tr><td><code>fetch [opt]</code> (abrufen)</td><td>fetch reviews and store figures; everything the first time, only new items afterwards</td></tr>
+      <tr><td><code>full [opt]</code> (voll)</td><td>re-read everything (<code>--full-sync</code>), never deletes</td></tr>
+      <tr><td><code>force [opt]</code></td><td>ignore the <code>minRefreshMinutes</code> waiting period</td></tr>
+      <tr><td><code>dry-run [opt]</code> (probe)</td><td>trial run, nothing is saved; checks the credentials</td></tr>
+      <tr><td><code>range FROM TO [opt]</code> (zeitraum)</td><td>only this period (YYYY-MM-DD)</td></tr>
+      <tr><td><code>stability [opt]</code> (stabilitaet)</td><td>crashes and sessions from Apple Analytics (first run 100 to 150 requests per app)</td></tr>
+      <tr><td><code>testdata [opt]</code> (testbetrieb)</td><td>Apple TestFlight and Google test tracks</td></tr>
+      <tr><td><code>all [opt]</code> (alles)</td><td>fetch reviews, stability and testing, build the report, open the browser</td></tr>
+      <tr><td><code>daily [opt]</code> (taeglich)</td><td>for cron and CI: fetch at most once per day, report always rebuilt</td></tr>
+      <tr><td><code>report</code> (bericht) / <code>open</code> (oeffnen)</td><td>build and open the report / only open it. <code>report --customer ID</code> builds a report for that customer only</td></tr>
+      <tr><td><code>markdown</code></td><td>Markdown summaries plus ZIP for sending</td></tr>
+      <tr><td><code>status</code> / <code>apps</code></td><td>status per app / configured apps, both without network</td></tr>
+      <tr><td><code>import-csv FILE --customer ID --app ID</code> (csv)</td><td>import a Play Console export</td></tr>
+      <tr><td><code>reset [--customer ID --app ID] [--dry-run]</code> (zuruecksetzen)</td><td>delete data and start over; backup in <code>backups/</code> plus confirmation <code>LOESCHEN</code></td></tr>
+      <tr><td><code>test</code> (tests) / <code>backup</code> (sicherung)</td><td>run tests / pack <code>data/</code> as <code>.tgz</code></td></tr>
+      <tr><td><code>help</code> (hilfe)</td><td>overview of all commands</td></tr>
+    </tbody></table></div>
+    <h3>Recommended order for the first run</h3>
+<pre><code>./ratings.sh apps                      # all customers and apps listed?
+./ratings.sh dry-run                   # check all credentials, save nothing
+./ratings.sh fetch                     # first fetch of reviews
+./ratings.sh stability                 # Apple Analytics (slow the first time)
+./ratings.sh testdata                  # TestFlight builds (one request per build)
+./ratings.sh report                    # build and open the report
+./ratings.sh status                    # per app: ok, partial or failed</code></pre>
+    <p class="note">Exit codes: 0 all fine, 1 at least one target failed or partial, 2 configuration or usage error. Without the wrapper: <code>python collect.py [options]</code> and <code>python report.py [--customer ID] [--app ID] [--platform P]</code>.</p>
+  </section>
+
+  <section class="card">
+    <h2>The two menus</h2>
+    <p>Both start from any folder, set up the <code>.venv</code> on first use and report a missing <code>config.json</code>. Keys: number = select, <code>H</code> = help for the current menu, <code>0</code> = one level back, <code>Q</code> = quit. The top shows the last successful fetch, the age of the report and the current selection. Each command is shown before it runs; after output the menu waits for Enter.</p>
+    <h3>Main menu: <code>menu.sh</code> (or <code>./ratings.sh menu</code>)</h3>
+    <div class="tablewrap" style="max-height:none"><table><thead><tr><th>No.</th><th>Item</th><th>Effect</th></tr></thead><tbody>
+      <tr><td>1</td><td>Everything at once</td><td>fetch reviews and stability, build the report, open the browser</td></tr>
+      <tr><td>2</td><td>Fetch data</td><td>automatic, full, ignore waiting period, stability, testing, both, trial run, period; toggle “open report afterwards”</td></tr>
+      <tr><td>3</td><td>Build and open report</td><td>with the current selection (customer, app, platform)</td></tr>
+      <tr><td>4</td><td>Open last report only</td><td>without rebuilding</td></tr>
+      <tr><td>5</td><td>Change selection</td><td>customer, app, platform, period; applies to all fetches and reports</td></tr>
+      <tr><td>6</td><td>Status and overview</td><td>status per app, configured apps, tests</td></tr>
+      <tr><td>7</td><td>Import Google CSV</td><td>Play Console export; choose customer and app under 5 first</td></tr>
+      <tr><td>8</td><td>Markdown files</td><td>open documentation and 14-day summaries in the browser or editor, rebuild, ZIP for sending</td></tr>
+      <tr><td>9</td><td>Delete data and start over</td><td>selection only or everything; always backup and confirmation; configuration and keys remain</td></tr>
+    </tbody></table></div>
+    <h3>Short menu: <code>kurzmenu.sh</code></h3>
+    <div class="tablewrap" style="max-height:none"><table><thead><tr><th>No.</th><th>Item</th><th>Effect</th></tr></thead><tbody>
+      <tr><td>1</td><td>Fetch everything</td><td>reviews, stability and testing, then rebuild report and Markdown (no ZIP, no browser)</td></tr>
+      <tr><td>2</td><td>Status</td><td>status per app, without network</td></tr>
+      <tr><td>3</td><td>Show report</td><td>open in the browser; built if missing</td></tr>
+    </tbody></table></div>
+    <p class="note">Shortcut so that <code>bew</code> starts the menu from anywhere: <code>ln -s ~/app-ratings-reviews/menu.sh /usr/local/bin/bew</code> or <code>echo "alias bew='~/app-ratings-reviews/menu.sh'" &gt;&gt; ~/.zshrc</code>. Own editor for Markdown: <code>MD_EDITOR</code>, otherwise <code>VISUAL</code> or <code>EDITOR</code>.</p>
+  </section>
+
+  <section class="card">
+    <h2>Daily run, publishing, backup</h2>
+    <ul>
+      <li><b>Schedule:</b> <code>./ratings.sh daily</code> once a day. cron: <code>30 6 * * * cd /home/ratings/app-ratings-reviews &amp;&amp; ./ratings.sh daily &gt;&gt; logs-daily.txt 2&gt;&amp;1</code>. Ready-made systemd units and the Mac, Windows and GitHub Actions variants are in <code>BETRIEB.md</code>.</li>
+      <li><b>Publishing:</b> <code>reports/</code> is static with no external dependencies. Serve it via a web server with a password or VPN, or put the folder on a network share (<code>reportDirectory</code>). Share only <code>reports/</code>, never <code>config/</code>, <code>data/</code> or <code>keys/</code>.</li>
+      <li><b>Sending:</b> <code>./ratings.sh markdown</code> creates a 14-day summary per app and a ZIP.</li>
+      <li><b>Backup:</b> <code>./ratings.sh backup</code> packs <code>data/</code>; also include <code>config/</code> and <code>keys/</code> in the server backup.</li>
+      <li><b>Responsibility:</b> someone checks the log when a status says “failed”; usually a key was revoked or expired.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>Typical errors</h2>
+    <div class="tablewrap" style="max-height:none"><table><thead><tr><th>Message</th><th>Cause and remedy</th></tr></thead><tbody>
+      <tr><td>HTTP 401 (Apple)</td><td>Issuer ID, Key ID and .p8 do not match, or the key was revoked. Compare the values, check the Key ID in the file name.</td></tr>
+      <tr><td>HTTP 403 (Apple)</td><td>Role too low. Stability and TestFlight need “App Manager”.</td></tr>
+      <tr><td>HTTP 404 or empty response</td><td>App ID or package name mistyped.</td></tr>
+      <tr><td>“No ongoing analytics report request”</td><td>Create a report request (ONGOING) per app in App Store Connect; data only from then on.</td></tr>
+      <tr><td>Google 400 or 401 on token</td><td>Service account JSON wrong or not yet invited to the Play Console (up to 48 hours delay).</td></tr>
+      <tr><td>“Configuration rejected”</td><td>Required field missing, key text placed directly in <code>config.json</code>, or Google enabled without credentials.</td></tr>
+      <tr><td>No new data despite fetching</td><td>Waiting period <code>minRefreshMinutes</code> active; <code>./ratings.sh force</code> overrides it.</td></tr>
+    </tbody></table></div>
+    <p class="note">Logs and error messages never contain keys or tokens. For everything else: <code>H</code> in the menu, <code>README.md</code>, <code>TECHNIK.md</code>, <code>EINRICHTUNG.md</code>.</p>
+  </section>
+</div>
+  <!--__FOOTER__-->
+</main>
+<script>/*__PAGE_SCRIPT__*/</script>
+</body>
+</html>

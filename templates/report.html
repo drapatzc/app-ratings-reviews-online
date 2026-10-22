@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:">
+<title>Bewertungen und Rezensionen</title>
+<style>
+:root{
+  --bg:color-mix(in srgb,var(--p-a,#5b5bff) 3%,#f4f5f7);--bg2:color-mix(in srgb,var(--p-a,#5b5bff) 5%,#eceef2);--surface:#fff;--solid:#fff;--line:#dfe2e8;--line2:#c8cdd6;
+  --fg:#15171c;--muted:#5d6472;--accent:var(--p-a,#5b5bff);--accent-fg:#fff;--accent-soft:color-mix(in srgb,var(--accent) 10%,transparent);
+  --good:#15a05f;--good-t:#0b6b3e;--mid:#e3961b;--mid-t:#8a5306;--bad:#df3d33;--bad-t:#a2261e;
+  --shadow:0 1px 2px rgba(16,20,30,.05);
+  --r:10px;--ease:cubic-bezier(.22,1,.36,1);
+}
+:root[data-theme=dark]{
+  --bg:color-mix(in srgb,var(--p-a,#5b5bff) 3%,#0f1115);--bg2:color-mix(in srgb,var(--p-a,#5b5bff) 4%,#181b22);--surface:#171a21;--solid:#171a21;--line:#272b35;--line2:#363b48;
+  --fg:#e9ebf0;--muted:#9aa2b1;--accent:color-mix(in srgb,var(--p-a,#5b5bff) 70%,#fff);--accent-fg:#0f1115;--accent-soft:color-mix(in srgb,var(--accent) 14%,transparent);
+  --good:#3ccf86;--good-t:#6fe0a6;--mid:#f2b547;--mid-t:#ffc96a;--bad:#f06a62;--bad-t:#ff928c;
+  --shadow:0 1px 2px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html{scroll-padding-top:64px}
+body{margin:0;font:14.5px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:var(--fg);background:var(--bg);
+  -webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden}
+h1,h2,h3{margin:0;letter-spacing:-.01em}
+h1{font-size:1.45rem;font-weight:650}h2{font-size:1.05rem;font-weight:650}h3{font-size:.92rem;font-weight:650;margin:1rem 0 .4rem}
+.num{font-variant-numeric:tabular-nums}
+button,select,input{font:inherit;color:var(--fg)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+
+/* Navigation */
+nav{position:sticky;top:0;z-index:20;background:var(--solid);border-bottom:1px solid var(--line)}
+nav .in{max-width:1320px;margin:auto;padding:.45rem 1.25rem;display:flex;align-items:center;gap:.5rem}
+nav .brand{font-weight:650;display:flex;align-items:center;gap:.5rem;margin-right:.8rem;white-space:nowrap}
+nav .logo{width:14px;height:14px;border-radius:3px;background:var(--accent);display:inline-block}
+nav .links{display:flex;gap:.1rem;overflow-x:auto;scrollbar-width:none;flex:1}
+nav a{color:var(--muted);text-decoration:none;padding:.4rem .6rem;border-radius:6px;font-size:.86rem;white-space:nowrap;border-bottom:2px solid transparent}
+nav a:hover{color:var(--fg);background:var(--bg2)}
+.iconbtn{width:34px;height:34px;border-radius:6px;border:1px solid var(--line2);background:var(--solid);cursor:pointer;display:grid;place-items:center;font-size:1rem}
+.iconbtn:hover{border-color:var(--accent);color:var(--accent)}
+
+main{max-width:1320px;margin:auto;padding:0 1.25rem 3rem;display:grid;grid-template-columns:minmax(0,1fr);gap:1rem}
+main>*,.grid>*,.score>*{min-width:0}
+
+/* Kopf */
+.head{padding:1.6rem 0 .4rem;display:grid;gap:.7rem}
+.head .top{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap}
+.head p{margin:.25rem 0 0;color:var(--muted);font-size:.95rem}
+.head .meta{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;font-size:.84rem;color:var(--muted)}
+.head .meta .pill{font-size:.8rem}
+.asof{display:inline-flex;align-items:center;gap:.45rem}
+.asof i{width:7px;height:7px;border-radius:50%;background:var(--good)}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:1.1rem 1.25rem;box-shadow:var(--shadow)}
+.chead{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;margin-bottom:.8rem;flex-wrap:wrap}
+.chead p{margin:.15rem 0 0;color:var(--muted);font-size:.84rem}
+.grid{display:grid;gap:.8rem}.kpis{grid-template-columns:repeat(auto-fit,minmax(min(180px,100%),1fr))}.charts{grid-template-columns:repeat(auto-fit,minmax(min(360px,100%),1fr))}
+
+/* Score-Karte */
+.score{display:grid;grid-template-columns:minmax(220px,1fr) minmax(260px,1.3fr) minmax(220px,.9fr);gap:2rem;align-items:center;padding:1.4rem 1.6rem}
+.lbl{color:var(--muted);font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-size:.72rem}
+.big{font-size:clamp(3rem,6vw,4.4rem);font-weight:650;line-height:1;letter-spacing:-.03em;margin-top:.4rem}
+.big small{font-size:.34em;letter-spacing:0;color:var(--muted);font-weight:500;margin-left:.15em}
+.sub{color:var(--muted);font-size:.86rem;margin-top:.5rem}
+.stars{display:flex;gap:3px;margin:.6rem 0 .2rem}
+.donut{display:grid;place-items:center;position:relative}.donut .mid{position:absolute;text-align:center}
+.donut .mid b{display:block;font-size:1.6rem;letter-spacing:-.02em}.donut .mid span{font-size:.78rem;color:var(--muted)}
+.legend{display:flex;gap:.9rem;font-size:.8rem;flex-wrap:wrap;color:var(--muted);margin-top:.6rem}.legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:.35rem}
+
+/* Kennzahlen */
+.kpi{display:flex;flex-direction:column-reverse;justify-content:flex-end;gap:.25rem;padding:.9rem 1.1rem;min-height:92px}
+.kpi b{font-size:clamp(1.3rem,2.2vw,1.8rem);overflow-wrap:anywhere;letter-spacing:-.02em;font-weight:650;line-height:1.1}.kpi span{color:var(--muted);font-size:.8rem}
+
+/* Balken */
+.bars{display:grid;gap:.5rem}
+.bar{display:grid;grid-template-columns:minmax(70px,34%) 1fr auto;gap:.7rem;align-items:center;font-size:.85rem}
+.bars.short .bar{grid-template-columns:2.6rem 1fr auto}
+.bar .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar .track{background:var(--bg2);border-radius:3px;height:10px;overflow:hidden}
+.bar .fill{height:100%;width:0;border-radius:3px;background:var(--accent);transition:width .5s var(--ease)}
+.bar .v{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.bar.big2 .track{height:12px}
+
+/* Filter */
+details.filters>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:1rem}
+details.filters>summary::-webkit-details-marker{display:none}
+details.filters>summary .caret{font-size:1.1rem;transition:transform .2s;color:var(--muted)}details.filters[open]>summary .caret{transform:rotate(180deg)}
+.filters .fgrid{display:grid;gap:.7rem;grid-template-columns:repeat(auto-fit,minmax(min(168px,100%),1fr));margin-top:.9rem}
+label{display:flex;flex-direction:column;font-size:.72rem;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);gap:.3rem}
+select,input[type=date],input[type=search]{background:var(--solid);border:1px solid var(--line2);border-radius:6px;padding:.45rem .6rem;min-height:36px;font-size:.9rem;text-transform:none;letter-spacing:0;font-weight:400}
+select:hover,input:hover{border-color:var(--accent)}select:focus,input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+input[type=checkbox]{width:20px;height:20px;accent-color:var(--accent);margin-top:.5rem}
+.row{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center}
+.btn{border:1px solid var(--line2);background:var(--solid);border-radius:6px;padding:.45rem .9rem;cursor:pointer;font-weight:600;font-size:.86rem}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}.btn.primary:hover{color:var(--accent-fg);filter:brightness(1.08)}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.7rem}
+.chip{display:inline-flex;align-items:center;gap:.4rem;padding:.2rem .35rem .2rem .6rem;border-radius:6px;background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);font-size:.8rem;font-weight:550}
+.chip button{border:none;background:none;cursor:pointer;width:20px;height:20px;border-radius:4px;color:var(--muted);line-height:1}.chip button:hover{background:var(--line2);color:var(--fg)}
+.muted{color:var(--muted)}.note{font-size:.82rem;color:var(--muted);margin-top:.5rem}
+.warn{border-left:3px solid var(--mid);padding:.55rem .85rem;background:color-mix(in srgb,var(--mid) 10%,transparent);border-radius:6px;margin:.7rem 0;font-size:.85rem}
+
+/* Tabellen */
+.tablewrap{overflow:auto;max-height:72vh;border-radius:8px;border:1px solid var(--line)}
+table{border-collapse:separate;border-spacing:0;width:100%;font-size:.85rem}
+th,td{padding:.55rem .75rem;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+th{position:sticky;top:0;background:var(--bg2);cursor:pointer;white-space:nowrap;font-size:.72rem;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);z-index:1}
+th[aria-sort=ascending]::after{content:" ↑";color:var(--accent)}th[aria-sort=descending]::after{content:" ↓";color:var(--accent)}
+tbody tr.click{cursor:pointer}tbody tr.click:hover{background:var(--accent-soft)}
+tr:last-child td{border-bottom:none}
+#tbl{min-width:1280px}#tbl td:first-child{min-width:150px}td.num{white-space:nowrap}
+td.txt{min-width:260px;max-width:440px}.clamp{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.pill{display:inline-flex;align-items:center;gap:.3rem;border-radius:4px;padding:.1rem .5rem;font-weight:600;font-size:.8rem;white-space:nowrap}
+.r5,.r4{background:color-mix(in srgb,var(--good) 16%,transparent);color:var(--good-t)}.r3{background:color-mix(in srgb,var(--mid) 18%,transparent);color:var(--mid-t)}
+.r2,.r1{background:color-mix(in srgb,var(--bad) 15%,transparent);color:var(--bad-t)}
+.plat{display:inline-flex;align-items:center;gap:.4rem;font-weight:600;font-size:.82rem}.plat i{width:8px;height:8px;border-radius:50%}
+.plat.apple i{background:#8e8ea8}.plat.google i{background:#34a853}
+.yes{color:var(--good-t);font-weight:650}.no{color:var(--muted)}
+.cmp{grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr))}
+.pager{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-top:.8rem;flex-wrap:wrap}
+
+dialog{max-width:min(760px,94vw);width:100%;border:1px solid var(--line2);border-radius:12px;background:var(--solid);color:var(--fg);padding:0;box-shadow:0 20px 60px -20px rgba(0,0,0,.45)}
+dialog::backdrop{background:rgba(8,10,20,.5)}
+.dhead{padding:1.2rem 1.5rem 1rem;border-bottom:1px solid var(--line)}
+.dbody{padding:1rem 1.5rem 1.4rem}
+dl{display:grid;grid-template-columns:max-content 1fr;gap:.35rem 1.2rem;font-size:.9rem}dt{color:var(--muted)}dd{margin:0;word-break:break-word}
+.quote{background:var(--bg2);border-radius:8px;padding:.9rem 1.1rem;white-space:pre-wrap;word-break:break-word;border-left:3px solid var(--accent)}
+.reply{background:color-mix(in srgb,var(--good) 10%,transparent);border-left-color:var(--good)}
+pre{white-space:pre-wrap;word-break:break-word;background:var(--bg2);padding:.8rem;border-radius:8px;font-size:.78rem}
+#tip{position:fixed;z-index:50;pointer-events:none;background:var(--solid);border:1px solid var(--line2);border-radius:6px;padding:.4rem .65rem;font-size:.8rem;box-shadow:var(--shadow);opacity:0;transition:opacity .12s;max-width:260px}
+#tip.on{opacity:1}
+svg text{fill:var(--muted);font-size:10px}
+footer{color:var(--muted);font-size:.8rem;text-align:center;padding:1.2rem 0 0;border-top:1px solid var(--line);display:grid;gap:.3rem}
+footer a{color:var(--muted)}footer a:hover{color:var(--accent)}footer .flinks a{margin:0 .5rem}
+@media (max-width:900px){.score{grid-template-columns:1fr;padding:1.2rem}.charts{grid-template-columns:1fr}.head{padding-top:1.1rem}nav .brand span.t{display:none}}
+th[data-sortable]:not([aria-sort])::after,#tbl th:not([aria-sort])::after{content:" ⇅";opacity:.45}
+#palpanel{position:fixed;z-index:30;top:54px;right:1rem;width:min(360px,calc(100vw - 2rem));max-height:calc(100vh - 80px);overflow:auto;background:var(--solid);border:1px solid var(--line2);border-radius:10px;padding:.8rem;box-shadow:0 12px 32px -12px rgba(0,0,0,.35)}
+#palpanel[hidden]{display:none}
+#palpanel h3{margin:.1rem .2rem .6rem;font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.pals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.4rem}
+.pal{display:flex;align-items:center;gap:.55rem;border:1px solid var(--line2);background:var(--surface);border-radius:6px;padding:.4rem .55rem;cursor:pointer;font-size:.84rem;font-weight:550;text-align:left}
+.pal:hover{border-color:var(--accent)}.pal[aria-pressed=true]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.pal i{flex:none;width:30px;height:18px;border-radius:3px}
+body[data-mode=test] .prod,body:not([data-mode=test]) .test{display:none!important}
+html[lang=en] [lang=de],html[lang=de] [lang=en]{display:none!important}
+.langs{display:inline-flex;align-items:center;gap:.1rem;font-size:.82rem;color:var(--muted);margin:0 .3rem;white-space:nowrap}
+.langs button{border:none;background:none;cursor:pointer;padding:.3rem .35rem;color:var(--muted);font-weight:600;border-radius:4px}
+.langs button:hover{color:var(--fg)}.langs button[aria-pressed=true]{color:var(--fg);text-decoration:underline;text-underline-offset:3px}
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:6px;padding:2px;background:var(--solid);gap:2px}
+.seg button{border:none;background:none;cursor:pointer;padding:.35rem .9rem;border-radius:4px;font-weight:600;font-size:.86rem;color:var(--muted)}
+.seg button[aria-pressed=true]{background:var(--accent);color:var(--accent-fg)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media print{nav,.iconbtn,details#filterbox,.pager,#tip{display:none!important}.card{box-shadow:none;break-inside:avoid;background:#fff}}
+</style>
+</head>
+<body>
+<nav><div class="in">
+  <div class="brand"><span class="logo"></span><span class="t">App-Feedback</span></div>
+  <div class="links"><a href="#ueberblick"><span lang="de">Überblick</span><span lang="en">Overview</span></a><a class="prod" href="#filter"><span lang="de">Filter</span><span lang="en">Filters</span></a><a class="prod" href="#diagramme"><span lang="de">Diagramme</span><span lang="en">Charts</span></a><a class="prod" href="#stab"><span lang="de">Stabilität</span><span lang="en">Stability</span></a><a class="test" href="#testflight"><span lang="de">Testbetrieb</span><span lang="en">Testing</span></a><!-- Versionsvergleich vorübergehend ausgeblendet (TODO.md): <a href="#versionen">Versionen</a> --><a class="prod" href="#rezensionen"><span lang="de">Rezensionen</span><span lang="en">Reviews</span></a><a href="#hinweise"><span lang="de">Hinweise</span><span lang="en">Notes</span></a><a href="hilfe.html"><span lang="de">Hilfe</span><span lang="en">Help</span></a></div>
+  <span class="langs" id="langs" role="group" aria-label="Sprache / Language"><button type="button" data-lang="de" aria-pressed="true">DE</button><span>|</span><button type="button" data-lang="en" aria-pressed="false">EN</button></span>
+  <button id="palbtn" class="iconbtn" type="button" aria-label="Designfarbe wählen" aria-expanded="false" aria-controls="palpanel" title="Designfarbe">🎨</button>
+  <button id="theme" class="iconbtn" type="button" aria-label="Farbschema wechseln" title="Hell / Dunkel">◐</button>
+</div></nav>
+<main>
+  <header class="head" id="ueberblick">
+    <div class="top">
+      <div><h1><span lang="de">Bewertungen und Rezensionen</span><span lang="en">Ratings and Reviews</span></h1><p id="lead"><span lang="de">Bewertungen und Rezensionen aus App Store und Google Play, Abstürze und Stabilität – offline, ohne Server, ohne Tracking.</span><span lang="en">Ratings and reviews from the App Store and Google Play, crashes and stability – offline, no server, no tracking.</span></p></div>
+      <div class="seg" id="modeseg" role="group" aria-label="Datenquelle"><button type="button" data-mode="prod" aria-pressed="true"><span lang="de">Produktion</span><span lang="en">Production</span></button><button type="button" data-mode="test" aria-pressed="false"><span lang="de">Testbetrieb</span><span lang="en">Testing</span></button></div>
+    </div>
+    <div class="meta"><span class="asof"><i></i><span id="asof"><span lang="de">Datenstand</span><span lang="en">Data as of</span></span></span><span class="pill r5" id="modebadge"><span lang="de">Produktionsdaten · App Store und Google Play, keine Testdaten</span><span lang="en">Production data · App Store and Google Play, no test data</span></span></div>
+  </header>
+  <section class="card prod" id="filter" aria-labelledby="fh">
+    <details class="filters" id="filterbox" open>
+      <summary><div><h2 id="fh"><span lang="de">Filter</span><span lang="en">Filters</span></h2><div class="note" id="count" style="margin:0"></div></div><span class="caret">▾</span></summary>
+      <div class="fgrid" id="filters"></div>
+      <div class="chips" id="chips"></div>
+      <div class="row" style="margin-top:1rem"><button id="reset" class="btn" type="button"><span lang="de">Filter zurücksetzen</span><span lang="en">Reset filters</span></button></div>
+    </details>
+  </section>
+  <section class="card score prod" id="hero-score" aria-label="Gesamtbewertung"></section>
+  <section class="grid kpis prod" id="kpis" aria-label="Kennzahlen"></section>
+  <section class="card prod" id="latestver"><div class="chead"><div><h2><span lang="de">Neueste Version im Store</span><span lang="en">Latest version in the store</span></h2><p><span lang="de">Je App ein Eintrag, passend zu Kunde, App und Plattform im Filter.</span><span lang="en">One entry per app, following the customer, app and platform filters.</span></p></div></div><div id="latestout"></div></section>
+  <section class="card prod"><div class="chead"><div><h2><span lang="de">Offizielle Store-Kennzahlen</span><span lang="en">Official store figures</span></h2><p><span lang="de">Von Apple veröffentlichte Gesamtbewertung, passend zu Kunde, App und Plattform im Filter – getrennt von den selbst berechneten Werten.</span><span lang="en">Overall rating published by Apple, following the customer, app and platform filters – kept separate from the values calculated here.</span></p></div></div><div id="official"></div></section>
+  <section class="grid charts prod" id="charts"></section>
+  <section class="card prod" id="stab"><div class="chead"><div><h2><span lang="de">Stabilität</span><span lang="en">Stability</span></h2><p><span lang="de">Abstürze und Sitzungen aus Apple Analytics, passend zu Kunde, App, Plattform und Zeitraum im Filter. Absturzrate = Abstürze je 1000 Sitzungen (Prozentwert in Klammern).</span><span lang="en">Crashes and sessions from Apple Analytics, following the customer, app, platform and period filters. Crash rate = crashes per 1,000 sessions (percentage in brackets).</span></p></div></div><div id="stabout"></div></section>
+  <!-- Versionsvergleich vorübergehend ausgeblendet (TODO.md)
+  <section class="card" id="versionen"><div class="chead"><div><h2>Versionsvergleich</h2><p>Zwei App-Versionen derselben Plattform gegenüberstellen.</p></div></div><div class="row" id="cmpctl"></div><div class="grid cmp" id="cmp" style="margin-top:1rem"></div></section>
+  -->
+  <section class="card prod" id="rezensionen"><div class="chead"><div><h2><span lang="de">Rezensionen</span><span lang="en">Reviews</span></h2><p><span lang="de">Klick auf eine Zeile öffnet die Details.</span><span lang="en">Click a row to open the details.</span></p></div>
+    <div class="row"><button id="exjson" class="btn" type="button">Export JSON</button><button id="excsv" class="btn primary" type="button">Export CSV</button></div></div>
+    <div class="tablewrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
+    <div class="pager"><button id="prev" class="btn" type="button"><span lang="de">← Zurück</span><span lang="en">← Back</span></button><span id="pg" class="note" style="margin:0"></span><button id="next" class="btn" type="button"><span lang="de">Weiter →</span><span lang="en">Next →</span></button></div>
+  </section>
+  <section class="card test" id="tfilter"><details class="filters" open><summary><div><h2><span lang="de">Filter</span><span lang="en">Filters</span></h2><div class="note" id="tfcount" style="margin:0"></div></div><span class="caret">▾</span></summary><div class="fgrid" id="tffilters"></div><div class="chips" id="tfchips"></div><div class="row" style="margin-top:1rem"><button id="tfreset" class="btn" type="button"><span lang="de">Filter zurücksetzen</span><span lang="en">Reset filters</span></button></div></details></section>
+  <section class="card test" id="testflight"><div class="chead"><div><h2><span lang="de">Testbetrieb</span><span lang="en">Testing</span></h2><p><span lang="de">Apple TestFlight (Builds, Nutzung) und Google Play (Testspuren, Absturzraten), getrennt von den Produktionsdaten der Stores. Es gibt keine Rezensionen und keine Store-Bewertung.</span><span lang="en">Apple TestFlight (builds, usage) and Google Play (test tracks, crash rates), separate from the stores’ production data. There are no reviews and no store rating here.</span></p></div></div><div id="tfout"></div></section>
+  <section class="card" id="hinweise"><details class="filters"><summary><h2><span lang="de">Datenvollständigkeit und Einschränkungen</span><span lang="en">Data completeness and limitations</span></h2><span class="caret">▾</span></summary><div id="limits" style="margin-top:1rem"></div></details></section>
+  <!--__FOOTER__-->
+</main>
+<div id="palpanel" hidden aria-label="Designfarben"></div>
+<div id="tip" role="tooltip"></div>
+<dialog id="detail" aria-label="Details zur Rezension"></dialog>
+<script>
+const DATA = /*__REPORT_DATA__*/null;
+
+// <core>
+const NONE = "__none__";
+const FIELD_FILTERS = ["customerId", "platform", "language", "country", "appVersion", "osLabel", "device"];
+
+function fieldValue(r, f) {
+  if (f === "appKey") return r.customerId + "/" + r.appId;
+  if (f === "osLabel") { const v = [r.operatingSystem, r.osVersion].filter(Boolean).join(" "); return v || NONE; }
+  const v = r[f];
+  return (v === null || v === undefined || v === "") ? NONE : String(v);
+}
+function hasReply(r) { return !!(r.developerReply && r.developerReply.text); }
+function matches(r, f) {
+  for (const k of FIELD_FILTERS) if (f[k] && fieldValue(r, k) !== f[k]) return false;
+  if (f.appKey && fieldValue(r, "appKey") !== f.appKey) return false;
+  if (f.ratingMin && !(r.rating >= f.ratingMin)) return false;
+  if (f.ratingMax && !(r.rating <= f.ratingMax)) return false;
+  const d = r.createdAt || "";
+  if (f.from && !(d >= f.from)) return false;
+  if (f.to && !(d <= f.to + "T23:59:59Z")) return false;
+  if (f.reply === "with" && !hasReply(r)) return false;
+  if (f.reply === "without" && hasReply(r)) return false;
+  if (f.textOnly && !(r.text && r.text.trim())) return false;
+  if (f.q) {
+    const hay = [r.title, r.text, r.developerReply && r.developerReply.text, r.appVersion, r.device, r.appName]
+      .filter(Boolean).join("\n").toLowerCase();
+    if (!hay.includes(f.q.toLowerCase())) return false;
+  }
+  return true;
+}
+function applyFilters(reviews, f, skip) {
+  const eff = Object.assign({}, f);
+  (skip || []).forEach(k => { eff[k] = ""; });
+  return reviews.filter(r => matches(r, eff));
+}
+function stats(rs) {
+  const dist = [0, 0, 0, 0, 0, 0]; let sum = 0, n = 0, noReply = 0;
+  for (const r of rs) {
+    if (r.rating >= 1 && r.rating <= 5) { dist[r.rating]++; sum += r.rating; n++; }
+    if (!hasReply(r)) noReply++;
+  }
+  return { count: rs.length, rated: n, avg: n ? sum / n : null, dist, pos: dist[4] + dist[5], neg: dist[1] + dist[2],
+           noReply, negShare: n ? (dist[1] + dist[2]) / n : null };
+}
+function groupBy(rs, keyFn) {
+  const m = new Map();
+  for (const r of rs) { const k = keyFn(r); if (!m.has(k)) m.set(k, []); m.get(k).push(r); }
+  return m;
+}
+function csvCell(v) {
+  if (v === null || v === undefined) return "";
+  let s = typeof v === "object" ? JSON.stringify(v) : String(v);
+  if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;       // Schutz vor Formel-Injektion in Tabellenkalkulationen
+  return /[",\n\r;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+const CSV_COLUMNS = ["customerId", "appId", "platform", "rating", "title", "text", "createdAt", "updatedAt", "country",
+  "language", "appVersion", "buildNumber", "operatingSystem", "osVersion", "device", "developerReply", "id"];
+function toCsv(rs) {
+  const lines = [CSV_COLUMNS.join(",")];
+  for (const r of rs) lines.push(CSV_COLUMNS.map(c => csvCell(c === "developerReply" ? (r.developerReply && r.developerReply.text) : r[c])).join(","));
+  return lines.join("\r\n") + "\r\n";
+}
+function toJson(rs) { return JSON.stringify(rs.map(r => { const c = Object.assign({}, r); delete c.raw; return c; }), null, 2); }
+function monthKey(r) { return r.createdAt ? r.createdAt.slice(0, 7) : null; }
+function sortReviews(rs, key, dir) {
+  const val = r => key === "reply" ? (hasReply(r) ? 1 : 0) : key === "osLabel" ? fieldValue(r, "osLabel") : r[key];
+  return rs.slice().sort((a, b) => {
+    const x = val(a), y = val(b);
+    if (x === y) return 0;
+    if (x === null || x === undefined || x === NONE) return 1;
+    if (y === null || y === undefined || y === NONE) return -1;
+    return (x < y ? -1 : 1) * dir;
+  });
+}
+function weekStart(d) {
+  const t = new Date(d + "T00:00:00Z"); t.setUTCDate(t.getUTCDate() - ((t.getUTCDay() + 6) % 7));
+  return t.toISOString().slice(0, 10);
+}
+// Zeilen: crashes [Datum, Version, OS, Gerät, Abstürze, Geräte], sessions [Datum, Version, OS, Gerät, Sitzungen, Dauer]
+function stabilityBy(crashRows, sessionRows, keyFn) {
+  const m = new Map();
+  const get = k => { if (!m.has(k)) m.set(k, { key: k, crashes: 0, sessions: 0, first: null, last: null }); return m.get(k); };
+  const touch = (o, d) => { if (!o.first || d < o.first) o.first = d; if (!o.last || d > o.last) o.last = d; };
+  for (const r of crashRows) { const o = get(keyFn(r)); o.crashes += r[4]; touch(o, r[0]); }
+  for (const r of sessionRows) { const o = get(keyFn(r)); o.sessions += r[4]; touch(o, r[0]); }
+  return [...m.values()].map(o => Object.assign(o, { rate: o.sessions > 0 ? 1000 * o.crashes / o.sessions : null, small: o.crashes < 5 }));
+}
+// </core>
+
+(function () {
+  if (!DATA) return;
+  const $ = id => document.getElementById(id);
+  const reduce = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) || /static/.test((location.search || "") + (location.hash || ""));
+  function h(tag, attrs, ...kids) {
+    const e = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs || {})) {
+      if (k === "class") e.className = v; else if (k.startsWith("on")) e.addEventListener(k.slice(2), v); else e.setAttribute(k, v);
+    }
+    for (const kid of kids.flat()) if (kid !== null && kid !== undefined) e.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+    return e;
+  }
+  const SVG = "http://www.w3.org/2000/svg";
+  function s(tag, attrs, text) { const e = document.createElementNS(SVG, tag); for (const [k, v] of Object.entries(attrs || {})) e.setAttribute(k, v); if (text !== undefined) e.textContent = text; return e; }
+  const locale = () => LANG === "de" ? "de-DE" : "en-GB";
+  const fmt = (n, d = 2) => n === null || n === undefined ? "–" : n.toLocaleString(locale(), { minimumFractionDigits: d, maximumFractionDigits: d });
+  const fmtInt = n => n.toLocaleString(locale());
+  const fmtDate = v => v ? v.replace("T", " ").replace("Z", "") : "–";
+  // Sortierung wird nur für diese Browser-Sitzung gemerkt (sessionStorage; ohne Zugriff funktioniert alles weiter).
+  const SS = {
+    get(k) { try { return JSON.parse(sessionStorage.getItem("arr:" + k)); } catch (e) { return null; } },
+    set(k, v) { try { sessionStorage.setItem("arr:" + k, JSON.stringify(v)); } catch (e) { /* ignorieren */ } }
+  };
+  // Macht eine fertig aufgebaute Tabelle (thead, tbody) per Klick auf die Spaltenköpfe auf-/absteigend sortierbar.
+  function sortable(tbl, key) {
+    const thead = tbl.children[0], tbody = tbl.children[1];
+    if (!thead || !tbody || !thead.children[0]) return;
+    const ths = Array.from(thead.children[0].children), rows = Array.from(tbody.children);
+    const cell = (tr, i) => { const c = tr.children[i]; return c ? String(c.textContent || "").trim() : ""; };
+    const isDate = v => /^\d{4}-\d{2}-\d{2}/.test(v);
+    const num = v => { const m = /^-?\d[\d.,]*/.exec(v); if (!m) return null; return parseFloat(LANG === "de" ? m[0].replace(/\./g, "").replace(",", ".") : m[0].replace(/,/g, "")); };
+    const empty = v => v === "" || v === "–";
+    const cmp = (a, b) => { if (isDate(a) && isDate(b)) return a < b ? -1 : a > b ? 1 : 0; const x = num(a), y = num(b); if (x !== null && y !== null) return x - y; return a.localeCompare(b, LANG, { numeric: true }); };
+    let cur = SS.get("sort:" + key);
+    function apply(i, dir) {
+      const sorted = rows.slice().sort((r1, r2) => { const a = cell(r1, i), b = cell(r2, i); if (empty(a) || empty(b)) return empty(a) && empty(b) ? 0 : empty(a) ? 1 : -1; return dir * cmp(a, b); });
+      tbody.replaceChildren(...sorted);
+      ths.forEach((th, j) => { if (j === i) th.setAttribute("aria-sort", dir > 0 ? "ascending" : "descending"); else th.removeAttribute("aria-sort"); });
+    }
+    ths.forEach((th, i) => {
+      th.setAttribute("data-sortable", "1"); th.setAttribute("tabindex", "0");
+      const go = () => { const dir = cur && cur.i === i ? -cur.dir : 1; cur = { i, dir }; SS.set("sort:" + key, cur); apply(i, dir); };
+      th.addEventListener("click", go); th.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+    });
+    if (cur && cur.i < ths.length && (cur.dir === 1 || cur.dir === -1)) apply(cur.i, cur.dir);
+  }
+  function sortTables(root, prefix) { root.querySelectorAll("table").forEach((t, n) => sortable(t, prefix + n)); }
+  const state = { f: {}, sort: SS.get("sort:rez") || { key: "createdAt", dir: -1 }, page: 0, pageSize: 50 };
+  const SMALL = 30;
+  const COL = { good: "var(--good)", mid: "var(--mid)", bad: "var(--bad)" };
+  const platName = p => p === "apple" ? "Apple" : "Google";
+  let uid = 0;
+
+  // ---- Theme ----
+  try { const t = localStorage.getItem("theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+  const flags = (location.search || "") + (location.hash || "");
+  // ---- Sprache: DE/EN oben rechts; Wahl im localStorage ("lang"), Wechsel lädt die Seite neu ----
+  let LANG = "de"; try { LANG = localStorage.getItem("lang") || LANG; } catch (e) {}
+  if (/\blang=en\b/.test(flags)) LANG = "en"; if (/\blang=de\b/.test(flags)) LANG = "de";
+  if (LANG !== "en") LANG = "de";
+  document.documentElement.lang = LANG;
+  const tx = (de, en) => LANG === "de" ? de : en;
+  document.querySelectorAll("#langs button").forEach(b => {
+    b.setAttribute("aria-pressed", String(b.dataset.lang === LANG));
+    b.addEventListener("click", () => { if (b.dataset.lang === LANG) return; try { localStorage.setItem("lang", b.dataset.lang); } catch (e) {} location.reload(); });
+  });
+  for (const [id, de, en] of [["palbtn", "Designfarbe wählen", "Choose theme colour"], ["theme", "Farbschema wechseln", "Switch light/dark"], ["modeseg", "Datenquelle", "Data source"], ["hero-score", "Gesamtbewertung", "Overall rating"], ["kpis", "Kennzahlen", "Key figures"], ["detail", "Details zur Rezension", "Review details"], ["palpanel", "Designfarben", "Theme colours"]])
+    $(id).setAttribute("aria-label", tx(de, en));
+  $("palbtn").setAttribute("title", tx("Designfarbe", "Theme colour")); $("theme").setAttribute("title", tx("Hell / Dunkel", "Light / dark"));
+  if (/dark/.test(flags)) document.documentElement.dataset.theme = "dark";
+  if (/light/.test(flags)) document.documentElement.dataset.theme = "light";
+  if (!document.documentElement.dataset.theme && window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches) document.documentElement.dataset.theme = "dark";
+  $("theme").addEventListener("click", () => {
+    const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem("theme", next); } catch (e) {}
+  });
+
+  // ---- Designfarbe (16 Paletten; wirkt sofort, auch im Nachtmodus; Wahl bleibt im Browser gespeichert) ----
+  const PALETTES = [
+    ["nebel", "Nebelviolett", "#5b5bff", "#8a5cff", "#ff5cae"], ["koralle", "Korallenriff", "#e84a2f", "#ff7a45", "#ffb347"],
+    ["tanne", "Tannengrün", "#12805c", "#2ba84a", "#9acd32"], ["eis", "Eisbucht", "#0b84c6", "#19b5d8", "#5ee0c1"],
+    ["pflaume", "Pflaumenglut", "#9b2a8f", "#d6459b", "#ff7a7a"], ["bernstein", "Bernsteinhain", "#b85f00", "#e08a00", "#f2c230"],
+    ["mitternacht", "Mitternachtsblau", "#1f3fbf", "#3f6fe8", "#7aa8ff"], ["kirsch", "Kirschblüte", "#d6336c", "#f06595", "#ffa8c5"],
+    ["salbei", "Salbeitau", "#4a7a64", "#6fa383", "#b0d09f"], ["rost", "Rostmond", "#b23a1e", "#d9622b", "#f2a65a"],
+    ["lavendel", "Lavendelnebel", "#7a5cd6", "#a98bf0", "#d2b8ff"], ["meeresglas", "Meeresglas", "#138a8a", "#1fb5a6", "#7be0c3"],
+    ["granat", "Granatfeuer", "#b01030", "#e03a3a", "#ff7a59"], ["zitrone", "Zitronenwind", "#6d8a00", "#9bbd16", "#d4d93a"],
+    ["schiefer", "Schiefergold", "#4a5568", "#7a6f50", "#c9a227"], ["polar", "Polarlicht", "#00a37a", "#2f7ae5", "#a25cff"]];
+  function applyPalette(id) {
+    const pal = PALETTES.find(p => p[0] === id) || PALETTES[0], st = document.documentElement.style;
+    if (st && st.setProperty) { st.setProperty("--p-a", pal[2]); st.setProperty("--p-b", pal[3]); st.setProperty("--p-c", pal[4]); }
+    document.querySelectorAll(".pal").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.id === pal[0])));
+    return pal[0];
+  }
+  (function palettes() {
+    const panel = $("palpanel"), btn = $("palbtn");
+    panel.append(h("h3", {}, tx("Designfarbe", "Theme colour")), h("div", { class: "pals" }, PALETTES.map(p =>
+      h("button", { class: "pal", type: "button", "data-id": p[0], "aria-pressed": "false", onclick: () => { applyPalette(p[0]); try { localStorage.setItem("palette", p[0]); } catch (e) {} } },
+        h("i", { style: "background:linear-gradient(90deg," + p[2] + " 0 34%," + p[3] + " 34% 67%," + p[4] + " 67%)" }), p[1]))));
+    let saved = null; try { saved = localStorage.getItem("palette"); } catch (e) {}
+    applyPalette(saved);
+    const setOpen = open => { if (open) panel.removeAttribute("hidden"); else panel.setAttribute("hidden", ""); btn.setAttribute("aria-expanded", String(open)); };
+    btn.addEventListener("click", e => { e.stopPropagation(); setOpen(panel.hasAttribute("hidden")); });
+    if (document.addEventListener) {
+      document.addEventListener("click", e => { if (!(panel.contains && panel.contains(e.target))) setOpen(false); });
+      document.addEventListener("keydown", e => { if (e.key === "Escape") setOpen(false); });
+    }
+  })();
+
+  // ---- Tooltip, Balken ----
+  const tip = $("tip");
+  if (document.addEventListener) {
+    document.addEventListener("mouseover", e => {
+      const t = e.target && e.target.closest ? e.target.closest("[data-tip]") : null;
+      if (!t) { tip.className = ""; return; }
+      tip.textContent = t.getAttribute("data-tip"); tip.className = "on";
+    });
+    document.addEventListener("mousemove", e => { if (tip.className === "on") { tip.style.left = Math.min(e.clientX + 14, window.innerWidth - 270) + "px"; tip.style.top = (e.clientY + 16) + "px"; } });
+  }
+  function grow(el, pct) { // Balken kurz einlaufen lassen (aus bei „Bewegung reduzieren“ oder ?static)
+    if (reduce || typeof requestAnimationFrame === "undefined") { el.style.width = pct + "%"; return; }
+    requestAnimationFrame(() => requestAnimationFrame(() => { el.style.width = pct + "%"; }));
+  }
+
+  const reviews = DATA.reviews.map(r => Object.assign({ osLabel: fieldValue(r, "osLabel") === NONE ? null : fieldValue(r, "osLabel") }, r));
+  $("asof").textContent = tx("Datenstand ", "Data as of ") + fmtDate(DATA.dataAsOf);
+  const sc = DATA.scope || {};
+  if (sc.customer || sc.app || sc.platform) $("asof").textContent += tx(" · Auswahl: ", " · Selection: ") + [sc.appName || sc.app, sc.platform ? platName(sc.platform) : null, !sc.app ? sc.customer : null].filter(Boolean).join(" · ");
+  $("lead").textContent = tx(fmtInt(reviews.length) + " erfasste Rezensionen aus " + DATA.apps.length + " App-/Plattform-Einträgen – offline, ohne Server, ohne Tracking.", fmtInt(reviews.length) + " collected reviews from " + DATA.apps.length + " app/platform entries – offline, no server, no tracking.");
+
+  // ---- Grafikbausteine ----
+  function starsSvg(value, size) {
+    const svg = s("svg", { viewBox: `0 0 ${size * 5 + 12} ${size}`, width: size * 5 + 12, height: size, role: "img", "aria-label": value === null ? tx("keine Bewertung", "no rating") : fmt(value) + tx(" von 5 Sternen", " out of 5 stars") });
+    const defs = s("defs", {});
+    for (let i = 0; i < 5; i++) {
+      const id = "sg" + (++uid), frac = value === null ? 0 : Math.max(0, Math.min(1, value - i));
+      const g = s("linearGradient", { id, x1: 0, x2: 1, y1: 0, y2: 0 });
+      g.append(s("stop", { offset: frac, "stop-color": "#ffb02e" }), s("stop", { offset: frac, "stop-color": "currentColor", "stop-opacity": .18 }));
+      defs.append(g);
+      const star = s("path", { d: "M12 2.4l2.9 6.2 6.7.8-5 4.6 1.4 6.7L12 17.4 6 20.7l1.4-6.7-5-4.6 6.7-.8z", fill: `url(#${id})`, transform: `translate(${i * (size + 3)} 0) scale(${size / 24})` });
+      svg.append(star);
+    }
+    svg.insertBefore(defs, svg.firstChild || null);
+    return svg;
+  }
+  function ratingColor(n) { return n >= 4 ? COL.good : n === 3 ? COL.mid : COL.bad; }
+  function distBars(st, big) {
+    return h("div", { class: "bars short" }, [5, 4, 3, 2, 1].map(n => {
+      const fill = h("div", { class: "fill" }); fill.style.background = ratingColor(n);
+      grow(fill, st.rated ? 100 * st.dist[n] / st.rated : 0);
+      return h("div", { class: "bar" + (big ? " big2" : ""), "data-tip": n + " ★: " + st.dist[n] + " (" + (st.rated ? fmt(100 * st.dist[n] / st.rated, 1) : "0") + " %)" },
+        h("div", { class: "t" }, n + " ★"), h("div", { class: "track" }, fill), h("div", { class: "v" }, fmtInt(st.dist[n])));
+    }));
+  }
+  function donut(st) {
+    const R = 54, C = 2 * Math.PI * R, mid = st.rated - st.pos - st.neg;
+    const svg = s("svg", { viewBox: "0 0 140 140", width: 170, height: 170, role: "img", "aria-label": tx("Anteil positiv, neutral, negativ", "Share positive, neutral, negative") });
+    svg.append(s("circle", { cx: 70, cy: 70, r: R, fill: "none", stroke: "var(--line)", "stroke-width": 16 }));
+    let acc = 0;
+    [[st.pos, COL.good, tx("positiv (4–5 ★)", "positive (4–5 ★)")], [mid, COL.mid, tx("neutral (3 ★)", "neutral (3 ★)")], [st.neg, COL.bad, tx("negativ (1–2 ★)", "negative (1–2 ★)")]].forEach(([n, col, lab]) => {
+      if (!n || !st.rated) return;
+      const len = C * n / st.rated, gap = Math.min(3, len * 0.1);
+      const c = s("circle", { cx: 70, cy: 70, r: R, fill: "none", stroke: col, "stroke-width": 16, "stroke-linecap": "round",
+        "stroke-dasharray": `${Math.max(0, len - gap)} ${C - Math.max(0, len - gap)}`, "stroke-dashoffset": -acc, transform: "rotate(-90 70 70)", "data-tip": lab + ": " + n });
+      svg.append(c); acc += len;
+    });
+    return svg;
+  }
+
+  // ---- Filter-Steuerelemente ----
+  const filterDefs = [
+    ["customerId", tx("Kunde", "Customer"), r => r.customerId, id => (DATA.apps.find(a => a.customerId === id) || {}).customerName || id],
+    ["appKey", "App", r => r.customerId + "/" + r.appId, k => { const a = DATA.apps.find(x => x.customerId + "/" + x.appId === k); return a ? a.appName : k; }],
+    ["platform", tx("Plattform", "Platform"), r => r.platform, platName],
+    ["language", tx("Sprache", "Language"), r => fieldValue(r, "language"), v => v],
+    ["country", tx("Land", "Country"), r => fieldValue(r, "country"), v => v],
+    ["appVersion", tx("App-Version", "App version"), r => fieldValue(r, "appVersion"), v => v],
+    ["osLabel", tx("Betriebssystem", "Operating system"), r => fieldValue(r, "osLabel"), v => v],
+    ["device", tx("Gerätemodell", "Device model"), r => fieldValue(r, "device"), v => v],
+  ];
+  const fbox = $("filters"), controls = [];
+  function register(label, active, clear) { controls.push({ label, active, clear }); }
+  function onChange() { state.page = 0; render(); }
+  function selectFilter(key, label, options) {
+    const sel = h("select", { id: "f_" + key }, h("option", { value: "" }, tx("Alle", "All")), options.map(([v, l]) => h("option", { value: v }, v === NONE ? tx("(unbekannt)", "(unknown)") : l)));
+    sel.addEventListener("change", () => { state.f[key] = sel.value; onChange(); });
+    fbox.append(h("label", {}, label, sel));
+    register(label, () => { if (!sel.value) return ""; const o = options.find(x => String(x[0]) === sel.value); return o ? (o[0] === NONE ? tx("(unbekannt)", "(unknown)") : o[1]) : sel.value; }, () => { sel.value = ""; state.f[key] = ""; });
+    return sel;
+  }
+  for (const [key, label, getter, labeler] of filterDefs) {
+    const values = [...new Set(reviews.map(getter))].sort((a, b) => a === NONE ? 1 : b === NONE ? -1 : String(labeler(a)).localeCompare(String(labeler(b)), LANG, { numeric: true }));
+    selectFilter(key, label, values.map(v => [v, labeler(v)]));
+  }
+  for (const [key, label] of [["ratingMin", tx("Sterne von", "Stars from")], ["ratingMax", tx("Sterne bis", "Stars to")]]) {
+    const sel = selectFilter(key, label, [1, 2, 3, 4, 5].map(n => [n, n + " ★"]));
+    sel.addEventListener("change", () => { state.f[key] = Number(sel.value) || ""; });
+  }
+  const asOfDate = (DATA.dataAsOf || new Date().toISOString()).slice(0, 10);
+  function daysBefore(d, n) { const t = new Date(d + "T00:00:00Z"); t.setUTCDate(t.getUTCDate() - n); return t.toISOString().slice(0, 10); }
+  const period = h("select", { id: "f_period" }, [["", tx("Gesamter Zeitraum", "Entire period")], ["30", tx("Letzte 30 Tage", "Last 30 days")], ["90", tx("Letzte 90 Tage", "Last 90 days")], ["365", tx("Letzte 365 Tage", "Last 365 days")], ["custom", tx("Benutzerdefiniert", "Custom")]].map(([v, l]) => h("option", { value: v }, l)));
+  const from = h("input", { type: "date", id: "f_from" }), to = h("input", { type: "date", id: "f_to" });
+  period.addEventListener("change", () => {
+    if (period.value === "") { state.f.from = state.f.to = ""; from.value = to.value = ""; }
+    else if (period.value !== "custom") { state.f.from = daysBefore(asOfDate, Number(period.value)); state.f.to = ""; from.value = state.f.from; to.value = ""; }
+    onChange();
+  });
+  from.addEventListener("change", () => { state.f.from = from.value; period.value = "custom"; onChange(); });
+  to.addEventListener("change", () => { state.f.to = to.value; period.value = "custom"; onChange(); });
+  fbox.append(h("label", {}, tx("Zeitraum", "Period"), period));
+  register(tx("Zeitraum", "Period"), () => (state.f.from || state.f.to) ? (state.f.from || "…") + tx(" bis ", " to ") + (state.f.to || tx("heute", "today")) : "", () => { state.f.from = state.f.to = ""; from.value = to.value = period.value = ""; });
+  const reply = h("select", { id: "f_reply" }, [["all", tx("Alle", "All")], ["with", tx("Mit Entwicklerantwort", "With developer reply")], ["without", tx("Ohne Entwicklerantwort", "Without developer reply")]].map(([v, l]) => h("option", { value: v }, l)));
+  reply.addEventListener("change", () => { state.f.reply = reply.value; onChange(); });
+  register(tx("Antwort", "Reply"), () => reply.value === "with" ? tx("mit Antwort", "with reply") : reply.value === "without" ? tx("ohne Antwort", "without reply") : "", () => { reply.value = "all"; state.f.reply = "all"; });
+  const textOnly = h("input", { type: "checkbox", id: "f_text" });
+  textOnly.addEventListener("change", () => { state.f.textOnly = textOnly.checked; onChange(); });
+  register(tx("Text", "Text"), () => textOnly.checked ? tx("nur mit Text", "with text only") : "", () => { textOnly.checked = false; state.f.textOnly = false; });
+  const q = h("input", { type: "search", id: "f_q", placeholder: tx("Suchen …", "Search …") });
+  let timer = null;
+  q.addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(() => { state.f.q = q.value.trim(); onChange(); }, 200); });
+  register(tx("Suche", "Search"), () => q.value.trim() ? (LANG === "de" ? "„" + q.value.trim() + "“" : "“" + q.value.trim() + "”") : "", () => { q.value = ""; state.f.q = ""; });
+  fbox.append(h("label", {}, tx("Entwicklerantwort", "Developer reply"), reply), h("label", {}, tx("Von", "From"), from), h("label", {}, tx("Bis", "To"), to), h("label", {}, tx("Nur mit Text", "Text only"), textOnly), h("label", {}, tx("Freitextsuche", "Full-text search"), q));
+  function renderChips() {
+    const chips = $("chips"); chips.replaceChildren();
+    controls.forEach(c => { const v = c.active(); if (v) chips.append(h("span", { class: "chip" }, c.label + ": " + v, h("button", { type: "button", "aria-label": c.label + tx(" entfernen", " remove"), onclick: () => { c.clear(); onChange(); } }, "×"))); });
+  }
+  $("reset").addEventListener("click", () => { controls.forEach(c => c.clear()); state.f = {}; onChange(); });
+
+  // ---- Diagramme ----
+  function chartCard(title, sub, body) { return h("div", { class: "card" }, h("div", { class: "chead" }, h("div", {}, h("h2", {}, title), sub ? h("p", {}, sub) : null)), body); }
+  function barChart(title, rows, note, sub) {
+    const max = Math.max(1, ...rows.map(r => r.value));
+    if (!rows.length) return chartCard(title, sub, h("div", { class: "muted" }, tx("Keine Daten.", "No data.")));
+    const list = h("div", { class: "bars" + (rows.every(r => String(r.label).length <= 6) ? " short" : "") });
+    for (const r of rows) {
+      const fill = h("div", { class: "fill" }); if (r.color) fill.style.background = r.color; grow(fill, 100 * r.value / max);
+      list.append(h("div", { class: "bar", "data-tip": r.tip || r.label + ": " + (r.text || r.value) }, h("div", { class: "t" }, r.label), h("div", { class: "track" }, fill), h("div", { class: "v" }, r.text || String(r.value))));
+    }
+    return chartCard(title, sub, h("div", {}, list, note ? h("div", { class: "note" }, note) : null));
+  }
+  function timeline(title, rs) {
+    const months = [...groupBy(rs.filter(monthKey), monthKey).entries()].sort((a, b) => a[0] < b[0] ? -1 : 1);
+    if (!months.length) return chartCard(title, "", h("div", { class: "muted" }, tx("Keine Daten.", "No data.")));
+    const W = 560, H = 220, L = 30, R = 30, B = 26, T = 12, n = months.length, step = (W - L - R) / n, bw = Math.max(3, Math.min(30, step - 4));
+    const data = months.map(([m, list]) => { const st = stats(list); return { m, pos: st.pos, neg: st.neg, mid: st.rated - st.pos - st.neg, avg: st.avg }; });
+    const max = Math.max(1, ...data.map(d => d.pos + d.neg + d.mid)), y = v => T + (H - T - B) * (1 - v / max);
+    const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, width: "100%", role: "img", "aria-label": title });
+    [0, .5, 1].forEach(k => { const yy = T + (H - T - B) * k; svg.append(s("line", { x1: L, x2: W - R, y1: yy, y2: yy, stroke: "var(--line)", "stroke-dasharray": "3 4" })); });
+    svg.append(s("text", { x: 2, y: T + 8 }, String(max)), s("text", { x: 2, y: H - B }, "0"), s("text", { x: W - R + 4, y: T + 8 }, "5 ★"), s("text", { x: W - R + 4, y: H - B }, "1 ★"));
+    data.forEach((d, i) => {
+      const x = L + i * step + (step - bw) / 2; let acc = 0;
+      for (const [v, col] of [[d.neg, COL.bad], [d.mid, COL.mid], [d.pos, COL.good]]) {
+        if (!v) continue;
+        svg.append(s("rect", { x, y: y(acc + v), width: bw, height: y(acc) - y(acc + v), fill: col, rx: Math.min(4, bw / 2), opacity: .88, "data-tip": d.m + ": " + (d.pos + d.neg + d.mid) + tx(" Rezensionen · Ø ", " reviews · avg ") + fmt(d.avg) }));
+        acc += v;
+      }
+      if (n <= 14 || i % Math.ceil(n / 12) === 0) svg.append(s("text", { x: x - 2, y: H - 8 }, d.m.slice(2)));
+    });
+    const pts = data.map((d, i) => d.avg === null ? null : [L + i * step + step / 2, T + (H - T - B) * (1 - (d.avg - 1) / 4), d]).filter(Boolean);
+    if (pts.length > 1) svg.append(s("polyline", { points: pts.map(p => p[0] + "," + p[1]).join(" "), fill: "none", stroke: "var(--accent)", "stroke-width": 2.5, "stroke-linejoin": "round", "stroke-linecap": "round" }));
+    pts.forEach(p => svg.append(s("circle", { cx: p[0], cy: p[1], r: 4, fill: "var(--solid)", stroke: "var(--accent)", "stroke-width": 2, "data-tip": p[2].m + ": Ø " + fmt(p[2].avg) + " ★" })));
+    const legend = h("div", { class: "legend" }, [["good", tx("positiv (4–5)", "positive (4–5)")], ["mid", tx("neutral (3)", "neutral (3)")], ["bad", tx("negativ (1–2)", "negative (1–2)")]].map(([c, l]) => h("span", {}, h("i", { style: "background:var(--" + c + ")" }), l)), h("span", {}, h("i", { style: "background:var(--accent);border-radius:50%" }), tx("Ø Sterne", "avg stars")));
+    return chartCard(title, tx("Rezensionen pro Monat, Linie = durchschnittliche Sterne", "Reviews per month, line = average stars"), h("div", {}, svg, legend));
+  }
+  function byGroup(title, rs, keyFn, limit, note, sub) {
+    const g = [...groupBy(rs, keyFn).entries()].map(([k, list]) => ({ k, list, st: stats(list) })).sort((a, b) => b.list.length - a.list.length).slice(0, limit);
+    return barChart(title, g.map(x => ({ label: x.k === NONE ? "(unbekannt)" : x.k, value: x.list.length, text: x.list.length + " · Ø " + fmt(x.st.avg) + (x.list.length < SMALL ? " ⚠" : ""),
+      color: x.st.avg === null ? undefined : x.st.avg >= 4 ? COL.good : x.st.avg >= 3 ? COL.mid : COL.bad })),
+      (note ? note + " " : "") + tx("⚠ = kleine Stichprobe (< " + SMALL + "). Farbe: Ø Sterne.", "⚠ = small sample (< " + SMALL + "). Colour: avg stars."), sub);
+  }
+
+  /* Versionsvergleich vorübergehend ausgeblendet (TODO.md)
+  // ---- Versionsvergleich ----
+  const cmpA = h("select", { id: "cmpA" }), cmpB = h("select", { id: "cmpB" });
+  $("cmpctl").append(h("label", {}, "Version A", cmpA), h("label", {}, "Version B", cmpB));
+  cmpA.addEventListener("change", renderCompare); cmpB.addEventListener("change", renderCompare);
+  function versionKey(r) { const v = fieldValue(r, "appVersion"); return v === NONE ? null : r.platform + "|" + v; }
+  function fillCompareOptions(rs) {
+    const keys = [...new Set(rs.map(versionKey).filter(Boolean))].sort((a, b) => a.localeCompare(b, "de", { numeric: true }));
+    for (const sel of [cmpA, cmpB]) {
+      const cur = sel.value; sel.replaceChildren(h("option", { value: "" }, "– wählen –"), keys.map(k => h("option", { value: k }, platName(k.split("|")[0]) + " " + k.split("|")[1])));
+      if (keys.includes(cur)) sel.value = cur;
+    }
+  }
+  let compareBase = [];
+  function renderCompare() {
+    const box = $("cmp"); box.replaceChildren();
+    const a = cmpA.value, b = cmpB.value;
+    if (!a || !b) { box.append(h("div", { class: "muted" }, "Zwei Versionen wählen. Rezensionen ohne App-Version (z. B. alle von Apple) können nicht zugeordnet werden.")); return; }
+    if (a.split("|")[0] !== b.split("|")[0]) box.append(h("div", { class: "warn" }, "Versionen verschiedener Plattformen: Apple und Google sind nicht vergleichbar (andere Erhebung, andere Nutzergruppen). Es werden nur die Einzelwerte gezeigt."));
+    for (const key of [a, b]) {
+      const rs = compareBase.filter(r => versionKey(r) === key), st = stats(rs);
+      const card = h("div", { class: "card" }, h("h2", {}, platName(key.split("|")[0]) + " " + key.split("|")[1]));
+      if (st.count < SMALL) card.append(h("div", { class: "warn" }, "Kleine Stichprobe (n = " + st.count + " < " + SMALL + "): Werte sind nicht belastbar."));
+      card.append(h("div", { class: "row", style: "margin:.6rem 0" }, starsSvg(st.avg, 18), h("b", { class: "num" }, fmt(st.avg)), h("span", { class: "muted" }, st.count + " Rezensionen · negativ: " + st.neg + " (" + (st.negShare === null ? "–" : fmt(st.negShare * 100, 1) + " %") + ")")));
+      card.append(distBars(st));
+      const months = [...groupBy(rs.filter(monthKey), monthKey).entries()].sort((x, y) => x[0] < y[0] ? -1 : 1);
+      card.append(h("div", { class: "note" }, "Verlauf: " + (months.map(([m, l]) => m + " (" + l.length + ", Ø " + fmt(stats(l).avg, 1) + ")").join(" · ") || "keine Daten")));
+      box.append(card);
+    }
+  }
+  */
+
+  // ---- Tabelle ----
+  const cols = [["appName", "App"], ["platform", tx("Plattform", "Platform")], ["rating", tx("Sterne", "Stars")], ["title", tx("Titel", "Title")], ["text", "Text"], ["createdAt", tx("Datum", "Date")], ["updatedAt", tx("Geändert", "Updated")], ["country", tx("Land", "Country")], ["language", tx("Sprache", "Language")], ["appVersion", "Version"], ["osLabel", tx("Betriebssystem", "Operating system")], ["device", tx("Gerät", "Device")], ["reply", tx("Antwort", "Reply")]];
+  const thead = $("tbl").tHead;
+  thead.append(h("tr", {}, cols.map(([k, l]) => { const th = h("th", { scope: "col", tabindex: "0", "data-k": k }, l); const go = () => { state.sort = { key: k, dir: state.sort.key === k ? -state.sort.dir : 1 }; SS.set("sort:rez", state.sort); render(); }; th.addEventListener("click", go); th.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } }); return th; })));
+  const pill = n => n ? h("span", { class: "pill r" + n }, "★ " + n) : "–";
+  const plat = p => h("span", { class: "plat " + p }, h("i", {}), platName(p));
+  function showDetail(r) {
+    const d = $("detail"), rows = [[tx("Erstellt", "Created"), fmtDate(r.createdAt)], [tx("Geändert", "Updated"), fmtDate(r.updatedAt)], [tx("Land", "Country"), r.country], [tx("Sprache", "Language"), r.language], [tx("App-Version", "App version"), r.appVersion], ["Build", r.buildNumber], [tx("Betriebssystem", "Operating system"), r.operatingSystem], [tx("OS-Version", "OS version"), r.osVersion], [tx("Gerät", "Device"), r.device], [tx("Erstmals erfasst", "First captured"), fmtDate(r.firstSeenAt)], [tx("Zuletzt gesehen", "Last seen"), fmtDate(r.lastSeenAt)], ["ID", r.id]];
+    const close = () => d.close ? d.close() : d.removeAttribute("open");
+    d.replaceChildren(
+      h("div", { class: "dhead" }, h("div", { class: "row", style: "justify-content:space-between" }, plat(r.platform), h("button", { class: "iconbtn", type: "button", "aria-label": tx("Schließen", "Close"), onclick: close }, "×")),
+        h("h2", { style: "font-size:1.5rem;margin:.6rem 0 .3rem" }, r.title || tx("(ohne Titel)", "(no title)")),
+        h("div", { class: "row" }, starsSvg(r.rating, 20), h("span", { class: "muted" }, r.appName + " · " + r.customerName))),
+      h("div", { class: "dbody" }, h("div", { class: "quote" }, r.text || tx("Kein Text.", "No text.")),
+        hasReply(r) ? h("div", { style: "margin-top:1rem" }, h("h3", {}, tx("Antwort des Entwicklers", "Developer reply") + (r.developerReply.repliedAt ? " · " + fmtDate(r.developerReply.repliedAt) : "")), h("div", { class: "quote reply" }, r.developerReply.text)) : null,
+        h("h3", {}, "Details"), h("dl", {}, rows.map(([k, v]) => [h("dt", {}, k), h("dd", {}, v === null || v === undefined || v === "" ? "–" : String(v))])),
+        h("details", { style: "margin-top:1rem" }, h("summary", { style: "cursor:pointer" }, tx("Rohdaten des Stores", "Raw store data")), h("pre", {}, JSON.stringify(r.raw || {}, null, 2)))));
+    if (d.showModal) d.showModal(); else d.setAttribute("open", "");
+  }
+  $("detail").addEventListener("click", e => { if (e.target === $("detail") && $("detail").close) $("detail").close(); });
+  function download(name, mime, content) {
+    const url = URL.createObjectURL(new Blob([content], { type: mime }));
+    const a = h("a", { href: url, download: name }); document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  let current = [];
+  $("exjson").addEventListener("click", () => download("rezensionen.json", "application/json", toJson(current)));
+  $("excsv").addEventListener("click", () => download("rezensionen.csv", "text/csv;charset=utf-8", "﻿" + toCsv(current)));
+  $("prev").addEventListener("click", () => { if (state.page > 0) { state.page--; renderTable(); } });
+  $("next").addEventListener("click", () => { if ((state.page + 1) * state.pageSize < current.length) { state.page++; renderTable(); } });
+  function renderTable() {
+    const sorted = sortReviews(current, state.sort.key, state.sort.dir);
+    thead.querySelectorAll("th").forEach(th => { if (th.dataset && th.dataset.k === state.sort.key) th.setAttribute("aria-sort", state.sort.dir > 0 ? "ascending" : "descending"); else th.removeAttribute("aria-sort"); });
+    const pages = Math.max(1, Math.ceil(sorted.length / state.pageSize));
+    if (state.page >= pages) state.page = pages - 1;
+    const slice = sorted.slice(state.page * state.pageSize, (state.page + 1) * state.pageSize);
+    const body = $("tbl").tBodies[0]; body.replaceChildren();
+    for (const r of slice) {
+      const tr = h("tr", { tabindex: "0", class: "click" },
+        h("td", {}, r.appName), h("td", {}, plat(r.platform)), h("td", {}, pill(r.rating)), h("td", {}, r.title || "–"), h("td", { class: "txt" }, h("div", { class: "clamp" }, r.text || "–")),
+        h("td", { class: "num" }, fmtDate(r.createdAt)), h("td", { class: "num" }, fmtDate(r.updatedAt)), h("td", {}, r.country || "–"), h("td", {}, r.language || "–"), h("td", {}, r.appVersion || "–"),
+        h("td", {}, r.osLabel || "–"), h("td", {}, r.device || "–"), h("td", { class: hasReply(r) ? "yes" : "no" }, hasReply(r) ? tx("✓ Ja", "✓ Yes") : tx("Nein", "No")));
+      tr.addEventListener("click", () => showDetail(r)); tr.addEventListener("keydown", e => { if (e.key === "Enter") showDetail(r); });
+      body.append(tr);
+    }
+    if (!slice.length) body.append(h("tr", {}, h("td", { colspan: String(cols.length), class: "muted" }, tx("Keine Rezensionen für diese Filter.", "No reviews match these filters."))));
+    $("pg").textContent = tx("Seite ", "Page ") + (state.page + 1) + tx(" von ", " of ") + pages + " · " + fmtInt(sorted.length) + tx(" Rezensionen", " reviews");
+  }
+
+  // ---- Gesamtdarstellung ----
+  function renderScore(st) {
+    const box = $("hero-score"); box.replaceChildren();
+    const big = h("div", { class: "big num" }); big.append(h("span", {}, fmt(st.avg, 2)), h("small", {}, "/ 5"));
+    const left = h("div", {}, h("div", { class: "lbl" }, tx("Ø Bewertung (aus Rezensionen berechnet)", "Average rating (calculated from reviews)")), big,
+      h("div", { class: "stars", style: "color:var(--fg)" }, starsSvg(st.avg, 26)), h("div", { class: "sub" }, tx("Basis: " + fmtInt(st.rated) + " Rezensionen. Nicht identisch mit der offiziellen Store-Gesamtbewertung.", "Based on " + fmtInt(st.rated) + " reviews. Not the official store rating.")));
+    const mid = h("div", {}, h("div", { class: "lbl", style: "margin-bottom:.8rem" }, tx("Verteilung", "Distribution")), distBars(st, true));
+    const neutral = st.rated - st.pos - st.neg;
+    const dn = h("div", { class: "donut" }, donut(st), h("div", { class: "mid" }, h("b", { class: "num" }, st.rated ? fmt(100 * st.pos / st.rated, 0) + " %" : "–"), h("span", {}, tx("positiv", "positive"))));
+    const right = h("div", { class: "donut", style: "display:block;text-align:center" }, dn, h("div", { class: "legend", style: "justify-content:center" },
+      h("span", {}, h("i", { style: "background:var(--good)" }), st.pos + tx(" positiv", " positive")), h("span", {}, h("i", { style: "background:var(--mid)" }), neutral + " neutral"), h("span", {}, h("i", { style: "background:var(--bad)" }), st.neg + tx(" negativ", " negative"))));
+    box.append(left, mid, right);
+  }
+  // Kunde, App und Plattform aus dem Filter oben gelten für alle Abschnitte; die übrigen Filter betreffen nur Rezensionen.
+  function inScope(x) {
+    const f = state.f;
+    return !(f.customerId && x.customerId !== f.customerId) && !(f.appKey && x.customerId + "/" + x.appId !== f.appKey) && !(f.platform && x.platform && x.platform !== f.platform);
+  }
+  // ---- Neueste Store-Version (abhängig von Kunde, App, Plattform) ----
+  function renderLatest() {
+    const box = $("latestout"), latest = new Map();
+    for (const x of DATA.ratings.filter(x => x.origin === "store-official" && x.appVersion)) {
+      if (!inScope(x)) continue;
+      const k = x.customerId + "/" + x.appId + "/" + x.platform, cur = latest.get(k);
+      if (!cur || x.capturedAt > cur.capturedAt) latest.set(k, x);
+    }
+    box.replaceChildren();
+    if (!latest.size) { box.append(h("div", { class: "muted" }, tx("Für diese Auswahl ist keine Store-Version erfasst (nur Apple liefert sie über die öffentliche Bewertungsübersicht).", "No store version captured for this selection (only Apple provides it via the public rating summary)."))); return; }
+    const rows = [...latest.values()].sort((a, b) => a.appName.localeCompare(b.appName, "de"));
+    box.append(h("div", { class: "tablewrap", style: "max-height:none" }, h("table", {}, h("thead", {}, h("tr", {}, ["App", tx("Plattform", "Platform"), tx("Version im Store", "Version in store"), tx("Erfasst am", "Captured at")].map(t => h("th", {}, t)))),
+      h("tbody", {}, rows.map(x => h("tr", {}, h("td", {}, h("b", {}, x.appName)), h("td", {}, plat(x.platform)), h("td", { class: "num" }, x.appVersion), h("td", { class: "num" }, fmtDate(x.capturedAt))))))),
+      h("div", { class: "note" }, tx("Quelle: öffentliche Apple-Abfrage (iTunes Lookup), jüngste Momentaufnahme je App. Reagiert auf Kunde, App und Plattform; die übrigen Filter betreffen nur Rezensionen.", "Source: public Apple lookup (iTunes Lookup), latest snapshot per app. Follows customer, app and platform; the other filters affect reviews only.")));
+    sortTables(box, "latest");
+  }
+  function render() {
+    current = applyFilters(reviews, state.f);
+    const st = stats(current);
+    $("count").textContent = fmtInt(current.length) + tx(" von ", " of ") + fmtInt(reviews.length) + tx(" Rezensionen entsprechen den Filtern", " reviews match the filters");
+    renderChips(); renderScore(st); renderLatest(); renderOfficial(); renderLimits(); renderStability();
+    const since30 = daysBefore(asOfDate, 30);
+    const recent = current.filter(r => (r.createdAt || "") >= since30).length;
+    const lastSync = DATA.apps.map(a => a.lastSuccessfulSync).filter(Boolean).sort().pop();
+    const periodSet = state.f.from || state.f.to;
+    const kp = (value, label) => { const b = h("b", { class: "num" }, typeof value === "number" ? fmtInt(value) : value); if (typeof value !== "number") b.style.fontSize = "1.2rem"; return h("div", { class: "card kpi" }, b, h("span", {}, label)); };
+    $("kpis").replaceChildren(kp(st.count, tx("Rezensionen (gefiltert)", "reviews (filtered)")), kp(st.pos, tx("positiv (4–5 ★)", "positive (4–5 ★)")), kp(st.neg, tx("negativ (1–2 ★)", "negative (1–2 ★)")),
+      kp(st.noReply, tx("ohne Entwicklerantwort", "without developer reply")), kp(periodSet ? current.length : recent, periodSet ? tx("neu im gewählten Zeitraum", "new in the selected period") : tx("neu in den letzten 30 Tagen", "new in the last 30 days")),
+      kp(lastSync ? (LANG === "de" ? lastSync.slice(8, 10) + "." + lastSync.slice(5, 7) + "." + lastSync.slice(0, 4) : lastSync.slice(0, 10)) : "–", tx("letzter erfolgreicher Abruf", "last successful fetch") + (lastSync ? " · " + lastSync.slice(11, 16) + " UTC" : "")));
+    const ch = $("charts"); ch.replaceChildren(
+      barChart(tx("Sterne-Verteilung", "Star distribution"), [5, 4, 3, 2, 1].map(n => ({ label: n + " ★", value: st.dist[n], text: fmtInt(st.dist[n]), color: ratingColor(n) })), "", tx("Anzahl je Sternebewertung", "Count per star rating")),
+      timeline(tx("Entwicklung im Zeitverlauf", "Trend over time"), current),
+      byGroup(tx("Rezensionen pro App", "Reviews per app"), current, r => r.appName + " (" + platName(r.platform) + ")", 15, "", tx("Top 15 nach Anzahl", "Top 15 by count")),
+      byGroup(tx("Rezensionen pro Plattform", "Reviews per platform"), current, r => platName(r.platform), 5, tx("Ø Sterne zwischen Apple und Google sind nicht direkt vergleichbar.", "Average stars for Apple and Google are not directly comparable."), tx("Apple gegen Google", "Apple vs. Google")),
+      byGroup(tx("Nach App-Version", "By app version"), current, r => fieldValue(r, "appVersion"), 12, "", tx("Nur Google liefert Versionen", "Only Google provides versions")),
+      byGroup(tx("Nach Betriebssystemversion", "By OS version"), current, r => fieldValue(r, "osLabel"), 12, "", tx("Nur Google liefert Versionen", "Only Google provides versions")),
+      byGroup(tx("Nach Gerätemodell", "By device model"), current, r => fieldValue(r, "device"), 12, "", tx("Nur Google liefert Geräte", "Only Google provides devices")));
+    // Versionsvergleich ausgeblendet: compareBase = applyFilters(reviews, state.f, ["appVersion"]); fillCompareOptions(compareBase); renderCompare();
+    renderTable();
+  }
+
+  // ---- Stabilität ----
+  // ---- Stabilität (folgt Kunde, App, Plattform und Zeitraum aus dem Filter oben) ----
+  let renderStability = () => {};
+  (function stability() {
+    const box = $("stabout"), S = DATA.stability || [];
+    if (!S.length) { box.append(h("div", { class: "muted" }, tx("Keine Stabilitätsdaten vorhanden. Abruf: ./ratings.sh stability", "No stability data. Fetch: ./ratings.sh stability"))); return; }
+    const pct = r => fmt(r / 10, 2) + " %"; // je 1000 Sitzungen ÷ 10 = Prozent
+    function rateCell(o) {
+      if (o.rate === null) return h("span", { class: "muted" }, "–");
+      const bad = o.rate >= 10, warn = o.rate >= 3;
+      return h("span", { class: "pill " + (bad ? "r1" : warn ? "r3" : "r5"), "data-tip": o.crashes + tx(" Abstürze auf ", " crashes in ") + fmtInt(o.sessions) + tx(" Sitzungen", " sessions") }, fmt(o.rate) + " (" + pct(o.rate) + ")");
+    }
+    function table(title, rows, labeler) {
+      const sorted = rows.slice().sort((a, b) => b.sessions - a.sessions).slice(0, 15);
+      return h("div", { style: "margin-top:1.2rem" }, h("h3", {}, title), h("div", { class: "tablewrap", style: "max-height:none" },
+        h("table", {}, h("thead", {}, h("tr", {}, ["", tx("Sitzungen", "Sessions"), tx("Abstürze", "Crashes"), tx("je 1000 Sitzungen", "per 1,000 sessions"), tx("Zeitraum", "Period"), tx("Hinweis", "Note")].map(t => h("th", {}, t)))),
+          h("tbody", {}, sorted.map(o => h("tr", {}, h("td", {}, h("b", {}, labeler(o.key))), h("td", { class: "num" }, fmtInt(o.sessions)), h("td", { class: "num" }, fmtInt(o.crashes)), h("td", {}, rateCell(o)),
+            h("td", { class: "num" }, (o.first || "–") + " → " + (o.last || "–")), h("td", { class: "muted" }, o.sessions === 0 ? tx("keine Sitzungsdaten, keine Rate", "no session data, no rate") : o.small ? tx("⚠ kleine Stichprobe (< 5 Abstürze)", "⚠ small sample (< 5 crashes)") : "")))))));
+    }
+    function draw() {
+      box.replaceChildren();
+      if (state.f.platform === "google") { box.append(h("div", { class: "muted" }, tx("Stabilitätsdaten gibt es nur für Apple. Plattformfilter auf „Alle“ oder „Apple“ stellen.", "Stability data exists for Apple only. Set the platform filter to “All” or “Apple”."))); return; }
+      const sel = S.filter(inScope);
+      if (!sel.length) { box.append(h("div", { class: "muted" }, tx("Für diese Auswahl liegen keine Stabilitätsdaten vor.", "No stability data for this selection."))); return; }
+      const from = state.f.from || "", to = state.f.to || "", inPeriod = r => r[0] >= from && (!to || r[0] <= to);
+      const all = sel.flatMap(x => x.crashes.concat(x.sessions)).map(r => r[0]).filter(d => inPeriod([d])).sort();
+      const maxD = all.length ? all[all.length - 1] : asOfDate;
+      const cr = sel.flatMap(x => x.crashes).filter(inPeriod), se = sel.flatMap(x => x.sessions).filter(inPeriod);
+      const tot = stabilityBy(cr, se, () => "alle")[0] || { crashes: 0, sessions: 0, rate: null };
+      box.append(h("div", { class: "grid kpis", style: "margin-top:1rem" }, [[fmtInt(tot.sessions), tx("Sitzungen", "Sessions")], [fmtInt(tot.crashes), tx("Abstürze", "Crashes")], [tot.rate === null ? "–" : fmt(tot.rate), tx("Abstürze je 1000 Sitzungen", "Crashes per 1,000 sessions") + (tot.rate === null ? "" : " (" + pct(tot.rate) + ")")], [(all[0] || "–") + " → " + maxD, tx("Datenzeitraum", "Data period")]].map(([v, l]) => h("div", { class: "card kpi" }, h("b", { class: "num", style: "font-size:" + (v.length > 14 ? "1.05rem" : "1.8rem") }, v), h("span", {}, l)))));
+      box.append(h("div", { class: "warn" }, tx("Absturzrate = Abstürze ÷ Sitzungen × 1000 (nur Apple, nicht mit Google vergleichbar). Apple blendet Zeilen mit sehr wenigen Geräten aus, die Werte sind Näherungen. Daten gibt es erst ab Einrichtung der Berichtsanfrage.", "Crash rate = crashes ÷ sessions × 1,000 (Apple only, not comparable with Google). Apple hides rows with very few devices, so values are approximations. Data exists only from the time the report request was set up.")));
+      const byVer = stabilityBy(cr, se, r => r[1]).sort((a, b) => (a.first || "") < (b.first || "") ? -1 : 1);
+      box.append(table(tx("Nach App-Version", "By app version"), byVer.slice(-15), k => k));
+      box.append(table(tx("Nach Betriebssystemversion", "By OS version"), stabilityBy(cr, se, r => r[2]), k => k));
+      box.append(table(tx("Nach Gerätetyp", "By device type"), stabilityBy(cr, se, r => r[3]), k => k));
+      const wk = stabilityBy(cr, se, r => weekStart(r[0])).sort((a, b) => a.key < b.key ? -1 : 1);
+      const keys = new Set(sel.map(x => x.customerId + "/" + x.appId)), neg = new Map();
+      for (const r of reviews) if (keys.has(r.customerId + "/" + r.appId) && r.platform === "apple" && r.rating <= 2 && r.createdAt && inPeriod([r.createdAt.slice(0, 10)])) { const w = weekStart(r.createdAt.slice(0, 10)); neg.set(w, (neg.get(w) || 0) + 1); }
+      if (wk.length >= 2) {
+        const W = 560, H = 210, L = 30, B = 26, T = 12, n = wk.length, step = (W - L - 10) / n, bw = Math.max(3, Math.min(30, step - 4));
+        const maxRate = Math.max(1, ...wk.map(o => o.rate || 0)), maxNeg = Math.max(1, ...wk.map(o => neg.get(o.key) || 0));
+        const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, width: "100%", role: "img", "aria-label": tx("Absturzrate und negative Rezensionen pro Woche", "Crash rate and negative reviews per week") });
+        wk.forEach((o, i) => {
+          const nv = neg.get(o.key) || 0, hgt = (H - T - B) * nv / maxNeg, x = L + i * step + (step - bw) / 2;
+          svg.append(s("rect", { x, y: H - B - hgt, width: bw, height: hgt, fill: COL.bad, rx: Math.min(4, bw / 2), opacity: .55, "data-tip": tx("Woche ab ", "Week from ") + o.key + ": " + nv + tx(" negative Rezensionen", " negative reviews") }), s("text", { x: x - 2, y: H - 8 }, o.key.slice(5)));
+        });
+        const pts = wk.filter(o => o.rate !== null).map(o => [L + wk.indexOf(o) * step + step / 2, T + (H - T - B) * (1 - o.rate / maxRate), o]);
+        if (pts.length > 1) svg.append(s("polyline", { points: pts.map(p => p[0] + "," + p[1]).join(" "), fill: "none", stroke: "var(--accent)", "stroke-width": 2.5, "stroke-linejoin": "round" }));
+        pts.forEach(p => svg.append(s("circle", { cx: p[0], cy: p[1], r: 4, fill: "var(--solid)", stroke: "var(--accent)", "stroke-width": 2, "data-tip": tx("Woche ab ", "Week from ") + p[2].key + ": " + fmt(p[2].rate) + " (" + pct(p[2].rate) + tx(") Abstürze je 1000 Sitzungen", ") crashes per 1,000 sessions") })));
+        box.append(h("h3", { style: "margin-top:1.4rem" }, tx("Wochenverlauf: Absturzrate und negative Rezensionen (1–2 ★)", "Weekly trend: crash rate and negative reviews (1–2 ★)")), svg,
+          h("div", { class: "legend" }, h("span", {}, h("i", { style: "background:var(--accent);border-radius:50%" }), tx("Abstürze je 1000 Sitzungen (Skala 0–", "Crashes per 1,000 sessions (scale 0–") + fmt(maxRate, 1) + ")"), h("span", {}, h("i", { style: "background:var(--bad)" }), tx("negative Rezensionen (Skala 0–", "negative reviews (scale 0–") + maxNeg + ")")),
+          h("div", { class: "note" }, tx("Zeitliche Übereinstimmung ist kein Beleg für eine Ursache. Apple-Rezensionen enthalten keine App-Version, ein Bezug zu einer Version ist daher nicht möglich. Wenige Wochen/Rezensionen = kaum belastbar.", "Coincidence in time is no proof of cause. Apple reviews carry no app version, so they cannot be tied to a version. Few weeks or reviews = not reliable.")));
+      } else {
+        box.append(h("h3", { style: "margin-top:1.4rem" }, tx("Wochenverlauf: Absturzrate und negative Rezensionen (1–2 ★)", "Weekly trend: crash rate and negative reviews (1–2 ★)")),
+          h("div", { class: "warn" }, tx("Für diese Auswahl und diesen Zeitraum liegen " + (wk.length ? "nur Daten für eine Woche" : "keine Stabilitätsdaten") + " vor. Das Diagramm wird erst angezeigt, sobald mindestens zwei Wochen mit Abstürzen und Sitzungen vorhanden sind (Abruf: ./ratings.sh stability).", (wk.length ? "Only one week of data" : "No stability data") + " for this selection and period. The chart appears once at least two weeks with crashes and sessions exist (fetch: ./ratings.sh stability).")));
+      }
+      sortTables(box, "stab");
+    }
+    renderStability = draw;
+  })();
+
+
+  // ---- Umschalter Produktion / Testbetrieb ----
+  (function testflight() {
+    const TF = DATA.testflight || [], GT = DATA.googleTesting || [], box = $("tfout"), fbox = $("tffilters"), badge = $("modebadge");
+    const pct = r => fmt(r / 10, 2) + " %";
+    const customerName = id => (DATA.apps.find(a => a.customerId === id) || {}).customerName || id;
+    const aBuilds = [], aCrashes = [];
+    TF.forEach(x => {
+      const byId = new Map(x.builds.map(b => [b.id, b])), base = { customerId: x.customerId, appId: x.appId, appName: x.appName, appKey: x.customerId + "/" + x.appId };
+      x.builds.forEach(b => aBuilds.push(Object.assign({}, base, b, b.usage || {}, { hasUsage: !!b.usage })));
+      x.crashes.forEach(c => { const b = byId.get(c.buildId) || {}; aCrashes.push(Object.assign({}, base, c, { version: b.version || null, build: b.build || null })); });
+    });
+    const gApps = GT.map(x => Object.assign({}, x, { appKey: x.customerId + "/" + x.appId }));
+    const trackOf = (x, code) => x.tracks.filter(t => t.releases.some(r => r.versionCodes.includes(code))).map(t => t.track);
+    const F = {}, controls = [];
+    const uniq = (rows, f) => [...new Set(rows.map(f).filter(v => v !== null && v !== undefined && v !== ""))];
+    const byText = (a, b) => String(a[1]).localeCompare(String(b[1]), LANG, { numeric: true });
+    function select(key, label, options, id) {
+      const sel = h("select", { id: id || "tf_" + key }, h("option", { value: "" }, tx("Alle", "All")), options.map(([v, l]) => h("option", { value: v }, l)));
+      sel.addEventListener("change", () => { F[key] = sel.value; draw(); });
+      fbox.append(h("label", {}, label, sel));
+      controls.push({ label, active: () => { const o = options.find(x => String(x[0]) === sel.value); return o ? o[1] : ""; }, clear: () => { sel.value = ""; F[key] = ""; } });
+      return sel;
+    }
+    const allApps = [...new Map(aBuilds.concat(aCrashes).concat(gApps).map(x => [x.appKey, x.appName])).entries()].sort(byText);
+    select("customerId", tx("Kunde", "Customer"), uniq(aBuilds.concat(gApps), x => x.customerId).map(id => [id, customerName(id)]).sort(byText));
+    select("appKey", "App", allApps, "tfApp");
+    select("platform", tx("Plattform", "Platform"), [aBuilds.length || aCrashes.length ? ["apple", "Apple (TestFlight)"] : null, gApps.length ? ["google", "Google Play"] : null].filter(Boolean));
+    select("version", "Version (Apple)", uniq(aBuilds, b => b.version).sort((a, b) => b.localeCompare(a, LANG, { numeric: true })).map(v => [v, v]));
+    select("status", tx("Build-Status (Apple)", "Build status (Apple)"), [["active", tx("Aktiv", "Active")], ["expired", tx("Abgelaufen", "Expired")]]);
+    select("track", tx("Spur (Google)", "Track (Google)"), uniq(gApps.flatMap(x => x.tracks), t => t.track).map(t => [t, t]));
+    select("versionCode", tx("Versionscode (Google)", "Version code (Google)"), uniq(gApps.flatMap(x => x.crashRates), r => r.versionCode).sort((a, b) => Number(b) - Number(a)).map(v => [v, v]));
+    if (aCrashes.length) {
+      select("os", tx("Betriebssystem", "Operating system"), uniq(aCrashes, c => c.osVersion).map(v => [v, v]).sort(byText));
+      select("device", tx("Gerätemodell", "Device model"), uniq(aCrashes, c => c.device).map(v => [v, v]).sort(byText));
+    }
+    for (const [key, label] of [["from", tx("Von", "From")], ["to", tx("Bis", "To")]]) {
+      const inp = h("input", { type: "date", id: "tf_" + key });
+      inp.addEventListener("change", () => { F[key] = inp.value; draw(); });
+      fbox.append(h("label", {}, label, inp));
+      controls.push({ label, active: () => inp.value, clear: () => { inp.value = ""; F[key] = ""; } });
+    }
+    $("tfreset").addEventListener("click", () => { controls.forEach(c => c.clear()); draw(); });
+    const inRange = d => (!F.from || d >= F.from) && (!F.to || d <= F.to + "T23:59:59Z");
+    const common = x => (!F.customerId || x.customerId === F.customerId) && (!F.appKey || x.appKey === F.appKey);
+    const fb = b => common(b) && (!F.version || b.version === F.version) && (!F.status || (F.status === "expired") === !!b.expired) && inRange(b.uploadedAt || "");
+    const fc = c => common(c) && (!F.version || c.version === F.version) && (!F.os || c.osVersion === F.os) && (!F.device || c.device === F.device) && inRange(c.createdAt || "");
+
+    function setMode(mode) {
+      document.body.dataset.mode = mode;
+      document.querySelectorAll("#modeseg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.mode === mode)));
+      badge.textContent = mode === "test" ? tx("Testdaten · TestFlight und Google Play Testspuren, keine Produktionsdaten, keine Rezensionen", "Test data · TestFlight and Google Play test tracks, no production data, no reviews") : tx("Produktionsdaten · App Store und Google Play, keine Testdaten", "Production data · App Store and Google Play, no test data");
+      badge.className = "pill " + (mode === "test" ? "r3" : "r5");
+      const lead = $("lead"); if (lead.dataset.prod === undefined) lead.dataset.prod = lead.textContent;
+      lead.textContent = mode === "test" ? tx(fmtInt(aBuilds.length) + " TestFlight-Builds und " + fmtInt(aCrashes.length) + " Absturzmeldungen aus " + TF.length + " Apple-Apps, " + GT.length + " Google-Apps mit Testspuren – offline, ohne Server, ohne Tracking.", fmtInt(aBuilds.length) + " TestFlight builds and " + fmtInt(aCrashes.length) + " crash reports from " + TF.length + " Apple apps, " + GT.length + " Google apps with test tracks – offline, no server, no tracking.") : lead.dataset.prod;
+      if (mode === "test") draw();
+    }
+    document.querySelectorAll("#modeseg button").forEach(b => b.addEventListener("click", () => setMode(b.dataset.mode)));
+    const sum = (rows, k) => rows.reduce((a, r) => a + (r[k] || 0), 0);
+    const rate = (c, n) => n > 0 ? 1000 * c / n : null;
+    const rateEl = r => r === null ? h("span", { class: "muted" }, "–") : h("span", { class: "pill " + (r >= 10 ? "r1" : r >= 3 ? "r3" : "r5") }, fmt(r) + " (" + pct(r) + ")");
+    function table(title, heads, rows) {
+      return h("div", { style: "margin-top:1.2rem" }, h("h3", {}, title), h("div", { class: "tablewrap", style: "max-height:none" }, h("table", {}, h("thead", {}, h("tr", {}, heads.map(t => h("th", {}, t)))), h("tbody", {}, rows))));
+    }
+    const empty = (cols, text) => [h("tr", {}, h("td", { colspan: String(cols), class: "muted" }, text))];
+    function draw() {
+      box.replaceChildren();
+      const chips = $("tfchips"); chips.replaceChildren();
+      controls.forEach(c => { const v = c.active(); if (v) chips.append(h("span", { class: "chip" }, c.label + ": " + v, h("button", { type: "button", "aria-label": c.label + tx(" entfernen", " remove"), onclick: () => { c.clear(); draw(); } }, "×"))); });
+      if (!TF.length && !GT.length) { $("tfcount").textContent = ""; box.append(h("div", { class: "warn" }, tx("Keine Testdaten vorhanden. Abruf: ./ratings.sh testdata", "No test data. Fetch: ./ratings.sh testdata"))); return; }
+      const showA = !F.platform || F.platform === "apple", showG = !F.platform || F.platform === "google";
+      const builds = showA ? aBuilds.filter(fb) : [], crashes = showA ? aCrashes.filter(fc) : [];
+      const gSel = showG ? gApps.filter(common) : [];
+      $("tfcount").textContent = fmtInt(builds.length) + tx(" von ", " of ") + fmtInt(aBuilds.length) + " Builds · " + fmtInt(crashes.length) + tx(" von ", " of ") + fmtInt(aCrashes.length) + tx(" Absturzmeldungen", " crash reports") + (gApps.length ? " · " + gSel.length + tx(" Google-Apps", " Google apps") : "") + tx(" entsprechen den Filtern", " match the filters");
+      if (builds.length || crashes.length || (showA && aBuilds.length)) {
+        const inst = sum(builds, "installCount"), ses = sum(builds, "sessionCount"), cr = sum(builds, "crashCount");
+        const r = rate(cr, ses);
+        box.append(h("div", { class: "grid kpis", style: "margin-top:1rem" }, [[fmtInt(builds.length), "Builds"], [fmtInt(builds.filter(b => !b.expired).length), tx("davon aktiv", "of which active")], [fmtInt(inst), tx("Installationen", "Installs")], [fmtInt(ses), tx("Sitzungen", "Sessions")], [fmtInt(cr), tx("Abstürze", "Crashes")],
+          [r === null ? "–" : fmt(r), tx("Abstürze je 1000 Sitzungen", "Crashes per 1,000 sessions") + (r === null ? "" : " (" + pct(r) + ")")], [fmtInt(sum(builds, "feedbackCount")), "Feedback"]].map(([v, l]) =>
+          h("div", { class: "card kpi" }, h("b", { class: "num", style: "font-size:" + (v.length > 14 ? "1.05rem" : "1.8rem") }, v), h("span", {}, l)))));
+        const apps = new Map();
+        builds.forEach(b => { const o = apps.get(b.appKey) || { name: b.appName, n: 0, active: 0, i: 0, s: 0, c: 0 }; o.n++; if (!b.expired) o.active++; o.i += b.installCount || 0; o.s += b.sessionCount || 0; o.c += b.crashCount || 0; apps.set(b.appKey, o); });
+        box.append(table(tx("Apple TestFlight nach App", "Apple TestFlight by app"), ["App", "Builds", tx("davon aktiv", "of which active"), tx("Installationen", "Installs"), tx("Sitzungen", "Sessions"), tx("Abstürze", "Crashes"), tx("je 1000 Sitzungen", "per 1,000 sessions")],
+          [...apps.values()].sort((a, b) => b.s - a.s).map(o => h("tr", {}, h("td", {}, h("b", {}, o.name)), h("td", { class: "num" }, fmtInt(o.n)), h("td", { class: "num" }, fmtInt(o.active)), h("td", { class: "num" }, fmtInt(o.i)), h("td", { class: "num" }, fmtInt(o.s)), h("td", { class: "num" }, fmtInt(o.c)), h("td", {}, rateEl(rate(o.c, o.s)))))));
+        const byVer = builds.slice().sort((a, b) => (b.uploadedAt || "").localeCompare(a.uploadedAt || "")).slice(0, 40);
+        box.append(table(tx("Apple TestFlight nach Version und Build (neueste zuerst, höchstens 40)", "Apple TestFlight by version and build (newest first, at most 40)"), ["App", "Version", "Build", tx("Hochgeladen", "Uploaded"), tx("Läuft ab", "Expires"), tx("Installationen", "Installs"), tx("Sitzungen", "Sessions"), tx("Abstürze", "Crashes"), tx("je 1000 Sitzungen", "per 1,000 sessions")],
+          byVer.length ? byVer.map(b => h("tr", {}, h("td", {}, b.appName), h("td", {}, b.version || "–"), h("td", {}, b.build || "–"), h("td", { class: "num" }, fmtDate(b.uploadedAt)),
+            h("td", { class: "num" }, b.expired ? tx("abgelaufen", "expired") : fmtDate(b.expiresAt)), h("td", { class: "num" }, b.hasUsage ? fmtInt(b.installCount) : "–"), h("td", { class: "num" }, b.hasUsage ? fmtInt(b.sessionCount) : "–"),
+            h("td", { class: "num" }, b.hasUsage ? fmtInt(b.crashCount) : "–"), h("td", {}, b.hasUsage ? rateEl(rate(b.crashCount, b.sessionCount)) : "–"))) : empty(9, tx("Keine Builds für diese Filter.", "No builds match these filters."))));
+        const count = keyFn => { const m = new Map(); crashes.forEach(c => { const k = keyFn(c) || tx("(unbekannt)", "(unknown)"); m.set(k, (m.get(k) || 0) + 1); }); return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 15); };
+        if (crashes.length) {
+          for (const [title, head, fn] of [[tx("Absturzmeldungen nach Version", "Crash reports by version"), "Version", c => c.version], [tx("Absturzmeldungen nach Betriebssystem", "Crash reports by operating system"), tx("Betriebssystem", "Operating system"), c => c.osVersion], [tx("Absturzmeldungen nach Gerät", "Crash reports by device"), tx("Gerät", "Device"), c => c.device]])
+            box.append(table(title, [head, tx("Meldungen", "Reports")], count(fn).map(([k, n]) => h("tr", {}, h("td", {}, k), h("td", { class: "num" }, fmtInt(n))))));
+        } else box.append(h("div", { class: "warn" }, tx("Keine einzelnen Absturzmeldungen von Testern für diese Filter. Aufteilung nach Betriebssystem und Gerät ist nur damit möglich; die Zahlen oben je Build liefert Apple ohne diese Aufteilung.", "No individual tester crash reports match these filters. Breakdown by operating system and device needs them; the per-build figures above come from Apple without this breakdown.")));
+        box.append(h("div", { class: "note" }, tx("Nutzungszahlen je Build gelten für den von Apple gemeldeten Zeitraum (rund ein Jahr), nicht je Tag; Zeitraumfilter wirken auf Upload-Datum und Meldedatum. Keine Tester-Namen, E-Mail-Adressen oder Absturzprotokolle gespeichert.", "Usage figures per build cover the period reported by Apple (about a year), not per day; period filters apply to upload date and report date. No tester names, e-mail addresses or crash logs are stored.")));
+      }
+      if (gSel.length) {
+        box.append(h("h3", { style: "margin-top:1.6rem" }, "Google Play"), h("div", { class: "warn" }, tx("Google-Testdaten sind noch nicht gegen die echte API geprüft. Absturzraten sind Anteile der Nutzer und nicht mit Apple vergleichbar; Google trennt sie nicht nach Test und Produktion, die Spur ergibt sich über den Versionscode.", "Google test data has not yet been verified against the real API. Crash rates are shares of users and not comparable with Apple; Google does not separate test and production, the track is derived from the version code.")));
+        const trackRows = gSel.flatMap(x => x.tracks.filter(t => !F.track || t.track === F.track).flatMap(t => t.releases.filter(r => !F.versionCode || r.versionCodes.includes(F.versionCode)).map(r => h("tr", {}, h("td", {}, h("b", {}, x.appName)), h("td", {}, t.track || "–"), h("td", {}, r.name || "–"), h("td", {}, r.status || "–"), h("td", {}, r.versionCodes.join(", ") || "–"), h("td", { class: "num" }, r.userFraction === null || r.userFraction === undefined ? "–" : fmt(r.userFraction * 100, 0) + " %")))));
+        box.append(table(tx("Google Play: Testspuren und Releases", "Google Play: test tracks and releases"), ["App", tx("Spur", "Track"), "Release", "Status", tx("Versionscodes", "Version codes"), tx("Anteil", "Share")], trackRows.length ? trackRows : empty(6, tx("Keine Spuren für diese Filter.", "No tracks match these filters."))));
+        const rateRows = [];
+        for (const x of gSel) {
+          const by = new Map();
+          for (const r of x.crashRates) {
+            if (F.versionCode && r.versionCode !== F.versionCode) continue;
+            if (F.track && !trackOf(x, r.versionCode).includes(F.track)) continue;
+            if (!inRange(r.date)) continue;
+            const o = by.get(r.versionCode) || { w: 0, c: 0, p: 0, max: 0, days: 0 }; const w = r.distinctUsers || 1; o.w += w; o.c += (r.crashRate || 0) * w; o.p += (r.userPerceivedCrashRate || 0) * w; o.max = Math.max(o.max, r.distinctUsers || 0); o.days++; by.set(r.versionCode, o);
+          }
+          for (const [code, o] of by) rateRows.push({ app: x.appName, code, track: trackOf(x, code).join(", ") || "–", crash: 100 * o.c / o.w, perceived: 100 * o.p / o.w, users: o.max, days: o.days });
+        }
+        rateRows.sort((a, b) => Number(b.code) - Number(a.code));
+        box.append(table(tx("Google Play: Absturzrate je Versionscode (gewichtet nach Nutzern)", "Google Play: crash rate per version code (weighted by users)"), ["App", tx("Versionscode", "Version code"), tx("Spur", "Track"), tx("Absturzrate", "Crash rate"), tx("nutzerwahrgenommen", "user-perceived"), tx("Nutzer (max. pro Tag)", "Users (max. per day)"), tx("Tage mit Daten", "Days with data")],
+          rateRows.length ? rateRows.map(o => h("tr", {}, h("td", {}, h("b", {}, o.app)), h("td", {}, o.code), h("td", {}, o.track), h("td", { class: "num" }, fmt(o.crash) + " %"), h("td", { class: "num" }, fmt(o.perceived) + " %"), h("td", { class: "num" }, fmtInt(o.users)), h("td", { class: "num" }, fmtInt(o.days)))) : empty(7, tx("Keine Absturzraten für diese Filter.", "No crash rates match these filters."))));
+      }
+      sortTables(box, "tf");
+    }
+  })();
+
+  // ---- Offizielle Kennzahlen und Einschränkungen (folgen Kunde, App, Plattform aus dem Filter oben) ----
+  function renderOfficial() {
+    const latest = new Map();
+    for (const x of DATA.ratings.filter(x => x.origin === "store-official" && inScope(x))) latest.set(x.customerId + "/" + x.appId + "/" + x.country, x);
+    const box = $("official"); box.replaceChildren();
+    if (!latest.size) { box.append(h("div", { class: "muted" }, tx("Keine offiziellen Store-Gesamtbewertungen erfasst (Apple: ratingCountries in der Konfiguration; Google bietet keine solche API).", "No official store ratings captured (Apple: ratingCountries in the configuration; Google offers no such API).")), h("div", { class: "note" }, tx("Alle Durchschnittswerte oben sind aus den erfassten Rezensionen berechnet und nicht identisch mit der Store-Gesamtbewertung.", "All averages above are calculated from the collected reviews and are not the official store rating."))); return; }
+    const all = [...latest.values()], rated = all.filter(x => x.total > 0).sort((a, b) => b.total - a.total), hidden = all.length - rated.length;
+    if (!rated.length) { box.append(h("div", { class: "muted" }, tx("Der Store meldet für die konfigurierten Länder noch keine Bewertungen.", "The store reports no ratings yet for the configured countries."))); return; }
+    box.append(h("div", { class: "tablewrap", style: "max-height:none" }, h("table", {}, h("thead", {}, h("tr", {}, ["App", tx("Land", "Country"), tx("Ø Sterne", "Avg stars"), tx("Anzahl Bewertungen", "Number of ratings"), tx("Erfasst am", "Captured at")].map(t => h("th", {}, t)))),
+      h("tbody", {}, rated.map(x => h("tr", {}, h("td", {}, h("b", {}, x.appName)), h("td", {}, x.country), h("td", {}, h("span", { class: "row", style: "gap:.5rem" }, starsSvg(x.average, 14), fmt(x.average))), h("td", { class: "num" }, fmtInt(x.total || 0)), h("td", { class: "num" }, fmtDate(x.capturedAt))))))),
+      h("div", { class: "note" }, tx("Quelle: öffentliche Apple-Bewertungsübersicht (iTunes Lookup), pro Land; Momentaufnahmen, nur bei Änderung gespeichert.", "Source: public Apple rating summary (iTunes Lookup), per country; snapshots, stored only when changed.") + (hidden ? " " + hidden + tx(" App/Land-Kombinationen ohne Bewertungen sind ausgeblendet.", " app/country combinations without ratings are hidden.") : "")));
+    sortTables(box, "official");
+  }
+  function renderLimits() {
+    const box = $("limits"); box.replaceChildren();
+    box.append(h("ul", { style: "margin:0 0 1rem;padding-left:1.2rem" }, (DATA.limitations[LANG] || DATA.limitations.de || []).map(t => h("li", { style: "margin:.3rem 0" }, t))));
+    box.append(h("div", { class: "tablewrap", style: "max-height:none" }, h("table", {}, h("thead", {}, h("tr", {}, ["App", tx("Plattform", "Platform"), tx("Datensätze", "Records"), "Status", tx("Letzter Erfolg", "Last success"), tx("Hinweis", "Note")].map(t => h("th", {}, t)))),
+      h("tbody", {}, DATA.apps.filter(inScope).map(a => h("tr", {}, h("td", {}, a.appName), h("td", {}, plat(a.platform)), h("td", { class: "num" }, fmtInt(a.reviewCount)), h("td", { class: a.status === "ok" ? "yes" : "no" }, a.status), h("td", { class: "num" }, fmtDate(a.lastSuccessfulSync)),
+        h("td", {}, a.lastError ? tx("Fehler: ", "Error: ") + a.lastError : (a.dataGaps.length ? tx("Mögliche Datenlücken: ", "Possible data gaps: ") + a.dataGaps.map(g => fmtDate(g.from) + " – " + fmtDate(g.to)).join("; ") : ""))))))));
+    sortTables(box, "limits");
+  }
+  render();
+})();
+</script>
+</body>
+</html>

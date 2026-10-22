@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "settings": {
+    "outputDirectory": "./data",
+    "reportDirectory": "./reports",
+    "defaultStartDate": "2024-01-01",
+    "defaultEndDate": null,
+    "requestTimeoutSeconds": 30,
+    "maxRetries": 3,
+    "incrementalSync": true,
+    "overlapDays": 7,
+    "minRefreshMinutes": 30,
+    "fullSyncIntervalDays": 30,
+    "fetchAppleVersions": true,
+    "logLevel": "INFO"
+  },
+  "customers": [
+    {
+      "id": "customer-1",
+      "name": "Kunde 1",
+      "enabled": true,
+      "credentials": {
+        "apple": {
+          "issuerId": "00000000-0000-0000-0000-000000000000",
+          "keyId": "ABC123DEFG",
+          "privateKeyEnvironmentVariable": "APPLE_PRIVATE_KEY"
+        },
+        "google": {
+          "serviceAccountEnvironmentVariable": "GOOGLE_APPLICATION_CREDENTIALS"
+        }
+      },
+      "apps": [
+        {
+          "id": "my-app",
+          "name": "Meine App",
+          "enabled": true,
+          "platforms": {
+            "apple": {
+              "enabled": true,
+              "appId": "123456789",
+              "countries": [],
+              "ratingCountries": ["DE", "AT", "CH"]
+            },
+            "google": {
+              "enabled": true,
+              "packageName": "com.example.myapp",
+              "languages": []
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

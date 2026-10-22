@@ -1,0 +1,14 @@
+# Persönliche Zugangsdaten und Daten nie einchecken
+*.p8
+*.env
+service-account*.json
+config/config.json
+data/*
+!data/.gitkeep
+reports/*
+!reports/.gitkeep
+backups/
+.venv/
+__pycache__/
+*.py[cod]
+.DS_Store
