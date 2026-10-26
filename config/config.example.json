@@ -3,6 +3,8 @@
   "settings": {
     "outputDirectory": "./data",
     "reportDirectory": "./reports",
+    "backupDirectory": "./backups",
+    "backupKeep": 30,
     "defaultStartDate": "2024-01-01",
     "defaultEndDate": null,
     "requestTimeoutSeconds": 30,
@@ -12,7 +14,8 @@
     "minRefreshMinutes": 30,
     "fullSyncIntervalDays": 30,
     "fetchAppleVersions": true,
-    "logLevel": "INFO"
+    "logLevel": "INFO",
+    "reportUrl": null
   },
   "customers": [
     {
@@ -34,12 +37,17 @@
           "id": "my-app",
           "name": "Meine App",
           "enabled": true,
+          "audience": null,
           "platforms": {
             "apple": {
               "enabled": true,
               "appId": "123456789",
               "countries": [],
-              "ratingCountries": ["DE", "AT", "CH"]
+              "ratingCountries": [
+                "DE",
+                "AT",
+                "CH"
+              ]
             },
             "google": {
               "enabled": true,
@@ -48,7 +56,129 @@
             }
           }
         }
+      ],
+      "_wettbewerber": "Optional, NUR APPLE. Fremde Apple-Apps aus dem öffentlichen Apple-Feed (jüngste 500 Rezensionen je Land) und iTunes Lookup, ohne Zugang. Nur Apple; Google bietet keine öffentliche Quelle. Erscheinen im Bericht nur, wenn hier eingetragen. countries ist Pflicht (zweistellige Ländercodes). Abruf: ./ratings.sh competitors (auch Teil von all und daily).",
+      "competitors": [
+        {
+          "id": "konkurrenz-x",
+          "name": "Konkurrenz X",
+          "enabled": true,
+          "vendor": "Anderes Softwarehaus",
+          "audience": null,
+          "apple": {
+            "appId": "987654321",
+            "countries": [
+              "DE",
+              "AT",
+              "CH"
+            ]
+          }
+        }
       ]
     }
-  ]
+  ],
+  "ai": {
+    "_hinweis": "Optional. KI ist nur aktiv, wenn ein Anbieter enabled ist UND seine Umgebungsvariable einen Schlüssel enthält (local: ohne Schlüssel); sind mehrere freigeschaltet, zählt der erste in der Liste. Schlüssel nie hier eintragen.",
+    "_modelle": "Unterstützte Modelle je Anbieter mit Listenpreisen zeigt ./ratings.sh ai-models. openai: gpt-6-luna (Vorgabe, günstig), gpt-6.1-sol, gpt-6-astra, gpt-5.6-terra, gpt-5.6-luna · anthropic: claude-sonnet-5-5 (Vorgabe), claude-haiku-5-5, claude-opus-5-5, claude-fable-5-1 · gemini: gemini-3.8-flash (Vorgabe), gemini-3.5-flash-lite, gemini-3.1-pro · perplexity: openai/gpt-5.6-terra (Vorgabe), anthropic/claude-sonnet-5-5, perplexity/sonar · xai: grok-4.7 · local (lokal, kostenlos; Vorgabe Ollama): llama3.1:8b (Vorgabe), gemma3:12b, qwen3:14b, mistral-small3.2, llama3.2:3b, jedes mit ollama pull geladene Modell. Andere Modelle desselben Anbieters funktionieren auch; dann fehlt nur der Listenpreis.",
+    "_preise": "Kosten werden aus Tokens × Listenpreis geschätzt (US-Dollar je Million Tokens, Stand 24.10.2026). Abweichende Preise je Anbieter mit priceInputPerMillion und priceOutputPerMillion eintragen (immer beide); sie haben Vorrang. Anzeige: ./ratings.sh ai-usage und am Ende jedes KI-Laufs je Kasse/App.",
+    "providers": [
+      {
+        "name": "anthropic",
+        "enabled": false,
+        "model": "claude-sonnet-5-5",
+        "apiKeyEnvironmentVariable": "ANTHROPIC_API_KEY"
+      },
+      {
+        "name": "openai",
+        "enabled": false,
+        "model": "gpt-6-luna",
+        "apiKeyEnvironmentVariable": "OPENAI_API_KEY",
+        "priceInputPerMillion": 0.1,
+        "priceOutputPerMillion": 0.5
+      },
+      {
+        "name": "gemini",
+        "enabled": false,
+        "model": "gemini-3.8-flash",
+        "apiKeyEnvironmentVariable": "GEMINI_API_KEY"
+      },
+      {
+        "name": "perplexity",
+        "enabled": false,
+        "model": "openai/gpt-5.6-terra",
+        "apiKeyEnvironmentVariable": "PERPLEXITY_API_KEY"
+      },
+      {
+        "name": "xai",
+        "enabled": false,
+        "model": "grok-4.7",
+        "apiKeyEnvironmentVariable": "XAI_API_KEY"
+      },
+      {
+        "name": "local",
+        "_hinweis": "Lokal auf dem eigenen Rechner, kostenlos, kein Schlüssel. Früherer Name ollama gilt weiter. Optional label (z. B. LM Studio). Ollama installieren (ollama.com), Modell laden: ollama pull llama3.1:8b, Ollama muss beim Lauf laufen. Für lokale Modelle kleinere Stapel und mehr Zeit: maxReviewsPerRequest 15, maxCharsPerRequest 24000, summaryReviews 40, requestTimeoutSeconds 600 (Kontextfenster von Ollama: OLLAMA_CONTEXT_LENGTH=16384 setzen). url ist optional (Standard http://127.0.0.1:11434/v1/chat/completions; LM Studio: http://127.0.0.1:1234/v1/chat/completions).",
+        "enabled": false,
+        "model": "llama3.1:8b"
+      }
+    ],
+    "language": "de",
+    "maxReviewsPerRequest": 60,
+    "maxCharsPerRequest": 120000,
+    "maxReviewChars": 1500,
+    "summaryReviews": 80,
+    "maxReviewsPerQuestion": 300,
+    "monthlyTokenLimit": 2000000,
+    "requestTimeoutSeconds": 180,
+    "sendReviewText": true,
+    "analyzeCompetitors": true,
+    "servicePort": 8765,
+    "features": {
+      "summary": true,
+      "sentiment": true,
+      "themes": true,
+      "versions": true,
+      "comparison": true,
+      "replyDrafts": true,
+      "measures": true,
+      "questions": false
+    }
+  },
+  "notify": {
+    "_hinweis": "Optional. Meldet nach dem Tageslauf (./ratings.sh daily) neue 1–2-★-Rezensionen, Ampelwechsel und Absturzsprünge. Erst mit enabled true aktiv; alle Kanäle mit enabled true werden bedient. Passwörter und Webhook-Adressen nie hier eintragen, nur den Namen der Umgebungsvariable. settings.reportUrl liefert den Link in der Nachricht. Anleitung: BENACHRICHTIGUNG.md.",
+    "enabled": false,
+    "language": "de",
+    "quietOnFirstRun": true,
+    "maxReviewsPerMessage": 10,
+    "triggers": {
+      "negativeReviews": true,
+      "ampelChange": true,
+      "crashJump": true
+    },
+    "channels": [
+      {
+        "type": "email",
+        "enabled": false,
+        "host": "smtp.example.com",
+        "port": 587,
+        "security": "starttls",
+        "username": "bericht@example.com",
+        "passwordEnvironmentVariable": "RATINGS_SMTP_PASSWORD",
+        "from": "bericht@example.com",
+        "to": [
+          "chef@example.com"
+        ]
+      },
+      {
+        "type": "slack",
+        "enabled": false,
+        "webhookUrlEnvironmentVariable": "RATINGS_SLACK_WEBHOOK"
+      },
+      {
+        "type": "webhook",
+        "enabled": false,
+        "urlEnvironmentVariable": "RATINGS_WEBHOOK_URL",
+        "secretEnvironmentVariable": "RATINGS_WEBHOOK_SECRET"
+      }
+    ]
+  }
 }

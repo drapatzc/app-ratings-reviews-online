@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "_hinweis": "Vorgefertigte Fragen für den Knopf „Fragen wählen“ unter „Fragen an die Daten (KI)“ im Bericht (Reiter „KI-Anfragen“, nur bei laufendem Fragedienst). Frei änderbar: je Eintrag `de` und `en`; der Klick trägt die Frage in der Sprache des Berichts ein und sendet sie sofort an den KI-Anbieter (kostet eine Anfrage). Die KI sieht nur die jüngsten Rezensionen der Auswahl (Kunde, App, Plattform), keine Absturz- oder Store-Zahlen; Fragen zu Abstürzen beantwortet sie also aus dem, was Nutzer schreiben. Reihenfolge = Anzeige. Bericht nach einer Änderung neu erzeugen.",
+  "questions": [
+    {
+      "de": "Wie ist der Gesamtzustand der ausgewählten Apps aus Sicht der Nutzer?",
+      "en": "What is the overall state of the selected apps from the users’ point of view?"
+    },
+    {
+      "de": "Welche Probleme werden am häufigsten genannt?",
+      "en": "Which problems are mentioned most often?"
+    },
+    {
+      "de": "Berichten Nutzer von Abstürzen, Einfrieren oder Datenverlust, und bei welchen Abläufen?",
+      "en": "Do users report crashes, freezes or data loss, and in which workflows?"
+    },
+    {
+      "de": "Welche Funktionen wünschen sich die Nutzer am häufigsten?",
+      "en": "Which features do users request most often?"
+    },
+    {
+      "de": "Was loben die Nutzer am meisten?",
+      "en": "What do users praise most?"
+    },
+    {
+      "de": "Gibt es Beschwerden, die erst seit dem letzten Update auftreten?",
+      "en": "Are there complaints that only appear since the latest update?"
+    },
+    {
+      "de": "Haben Nutzer Probleme beim Anmelden, Registrieren oder Freischalten?",
+      "en": "Do users have trouble logging in, registering or activating?"
+    },
+    {
+      "de": "Drohen Nutzer damit, die App zu löschen oder zu wechseln, und warum?",
+      "en": "Do users threaten to delete the app or switch, and why?"
+    },
+    {
+      "de": "Gibt es Rezensionen, bei denen die Sterne nicht zum Text passen?",
+      "en": "Are there reviews where the stars do not match the text?"
+    },
+    {
+      "de": "Wie bewerten die Nutzer den Support und die Antworten auf Rezensionen?",
+      "en": "How do users rate support and the replies to reviews?"
+    },
+    {
+      "de": "Welche Beschwerden betreffen den Anbieter (Service, Freischaltung, Abläufe) statt die App selbst?",
+      "en": "Which complaints concern the provider (service, activation, processes) rather than the app itself?"
+    },
+    {
+      "de": "Gibt es Hinweise auf Probleme mit bestimmten Geräten oder Systemversionen?",
+      "en": "Are there signs of problems with specific devices or OS versions?"
+    },
+    {
+      "de": "Welche Probleme nennen Nutzer bei Synchronisation, Backup oder Datenübernahme?",
+      "en": "Which problems do users mention with sync, backup or data migration?"
+    },
+    {
+      "de": "Beschweren sich Nutzer über Kosten, Abo oder Werbung?",
+      "en": "Do users complain about costs, subscriptions or ads?"
+    },
+    {
+      "de": "Gibt es Kritik an Bedienung, Übersichtlichkeit oder Design?",
+      "en": "Is there criticism of usability, clarity or design?"
+    },
+    {
+      "de": "Welche Probleme nennen fremdsprachige Rezensionen, die in deutschen Rezensionen fehlen?",
+      "en": "Which problems do non-German reviews mention that German reviews do not?"
+    },
+    {
+      "de": "Welche drei Dinge sollten wir als Nächstes verbessern?",
+      "en": "Which three things should we improve next?"
+    },
+    {
+      "de": "Was hält zufriedene Nutzer bei der App?",
+      "en": "What keeps satisfied users with the app?"
+    },
+    {
+      "de": "Gibt es Datenschutz- oder Sicherheitsbedenken in den Rezensionen?",
+      "en": "Are there privacy or security concerns in the reviews?"
+    },
+    {
+      "de": "Welche Rezensionen sollte der Support zuerst beantworten?",
+      "en": "Which reviews should support answer first?"
+    }
+  ]
+}

@@ -14,9 +14,22 @@ CONTENT_FIELDS = ("rating", "title", "text", "language", "country", "appVersion"
                   "operatingSystem", "osVersion", "device", "updatedAt", "developerReply")
 
 
+def iso_z(moment: datetime) -> str:
+    """Zeitpunkt als UTC-ISO `YYYY-MM-DDTHH:MM:SSZ` (Sekundenauflösung); naive Werte gelten als UTC."""
+    if moment.tzinfo is None:
+        moment = moment.replace(tzinfo=timezone.utc)
+    return moment.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def parse_iso(value: str) -> datetime:
+    """Liest `YYYY-MM-DDTHH:MM:SSZ` (oder mit Offset) als zeitzonenbewusstes datetime. Ungültig → ValueError."""
+    moment = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    return moment if moment.tzinfo else moment.replace(tzinfo=timezone.utc)
+
+
 def utc_now() -> str:
     """Aktuelle Zeit als ISO-8601 UTC (Sekundenauflösung)."""
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return iso_z(datetime.now(timezone.utc))
 
 
 def to_utc_iso(value: Any) -> str | None:
@@ -27,14 +40,14 @@ def to_utc_iso(value: Any) -> str | None:
         if isinstance(value, (int, float)) or (isinstance(value, str) and value.isdigit()):
             number = float(value)
             number = number / 1000 if number > 1e11 else number
-            dt = datetime.fromtimestamp(number, timezone.utc)
+            moment = datetime.fromtimestamp(number, timezone.utc)
         else:
-            dt = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
-            if dt.tzinfo is None:
-                dt = dt.replace(tzinfo=timezone.utc)
+            moment = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+            if moment.tzinfo is None:
+                moment = moment.replace(tzinfo=timezone.utc)
     except (ValueError, OverflowError, OSError):
         return None
-    return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return moment.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def review_key(platform: str, store_app_id: str, review_id: str) -> str:
