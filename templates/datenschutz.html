@@ -20,7 +20,7 @@
 </div></nav>
 <main class="doc">
 <div lang="de">
-  <header class="head"><div class="top"><div><h1>Datenschutzerklärung</h1><p>Für diesen Bericht und das Programm <code>app-ratings-reviews</code>. Stand: Oktober 2026.</p></div></div></header>
+  <header class="head"><div class="top"><div><h1>Datenschutzerklärung</h1><p>Für diesen Bericht und das Programm <code>app-ratings-reviews</code>. Stand: 24. Oktober 2026.</p></div></div></header>
   <section class="card">
     <h2>1. Verantwortlicher</h2>
     <p>Christian Drapatz, OneTwoApps, Kämpenstraße 42, 45147 Essen, Deutschland. E-Mail: <a href="mailto:support@onetwoapps.com">support@onetwoapps.com</a>. Ein Datenschutzbeauftragter ist nicht bestellt.</p>
@@ -51,6 +51,30 @@
       <li><b>Dauer:</b> Rezensionsdaten werden fortlaufend ergänzt und nicht automatisch gelöscht, damit Verläufe über längere Zeit auswertbar bleiben. Löschung erfolgt bewusst durch den Betreiber (<code>reset</code>, mit Sicherung).</li>
       <li><b>Empfänger:</b> der Betreiber und die Personen, denen er den Bericht oder die Zusammenfassungen bereitstellt (z. B. der jeweilige App-Kunde). Eine Weitergabe an sonstige Dritte findet nicht statt.</li>
       <li><b>Drittland:</b> Beim Abruf kommuniziert das Programm mit Apple Inc. (USA) und Google LLC (USA) über deren Schnittstellen. Hierfür gelten die Datenschutzbestimmungen der Anbieter und deren Standardvertragsklauseln beziehungsweise das EU-US Data Privacy Framework.</li>
+    </ul>
+  </section>
+  <section class="card">
+    <h2>4a. KI-Analyse (optional, nur wenn der Betreiber sie einschaltet)</h2>
+    <p>Der Betreiber kann Rezensionen zusätzlich durch ein Sprachmodell eines KI-Anbieters auswerten lassen (Zusammenfassung je App, Stimmung je Rezension, Antwortentwürfe, Themenvorschläge, Maßnahmenvorschläge, Fragen an die Daten). Diese Funktion ist standardmäßig aus und wird nur aktiv, wenn der Betreiber in der Konfiguration einen Anbieter freischaltet und einen eigenen Zugangsschlüssel hinterlegt. Es ist immer genau ein Anbieter aktiv.</p>
+    <ul>
+      <li><b>Mögliche Empfänger:</b> OpenAI (USA), Google LLC (Gemini, USA), Anthropic PBC (Claude, USA), Perplexity AI (USA) oder xAI (Grok, USA), je nach Auswahl des Betreibers. Der Bericht nennt bei jedem KI-Text Anbieter und Modell.</li>
+      <li><b>Lokale Verarbeitung (Anbieter „local“, z. B. Ollama oder LM Studio):</b> Wählt der Betreiber den lokalen Anbieter, läuft das Sprachmodell auf seinem eigenen Rechner; die Rezensionen werden nur an diesen Rechner selbst (127.0.0.1) übergeben, es gibt keinen externen Empfänger und keine Übermittlung in ein Drittland. Die übrigen Angaben dieses Abschnitts gelten entsprechend.</li>
+      <li><b>Übermittelte Daten:</b> Titel und Text der Rezension (abschaltbar über <code>sendReviewText</code>, dann gehen nur Zahlen), Sternebewertung, Datum, App-Version, Sprache, Land, Name der App, ob eine Entwicklerantwort existiert. Rezensionen werden nummeriert übergeben; die Store-Kennung der Rezension, Nutzernamen (werden ohnehin nicht gespeichert), Zugangsdaten und Store-Kennzahlen verlassen den Rechner nicht. Die Maßnahmenvorschläge beruhen auf einer Anfrage ohne Rezensionstexte; sie enthält nur Zählungen und die von der KI zuvor formulierten Kernaussagen.</li>
+      <li><b>Wettbewerber:</b> Hat der Betreiber fremde Apple-Apps als Wettbewerber eingetragen, werden auch deren öffentliche Rezensionen (aus dem öffentlichen Apple-Feed, derselbe Umfang je Rezension) an den Anbieter gesendet, sofern <code>analyzeCompetitors</code> nicht ausgeschaltet ist; Antwortentwürfe entstehen dafür nicht.</li>
+      <li><b>Umfang:</b> nur neue oder geänderte Rezensionen; die Zusammenfassung einer App beruht auf höchstens den jüngsten Rezensionen (Einstellung <code>summaryReviews</code>), eine Frage auf höchstens <code>maxReviewsPerQuestion</code> Rezensionen. Ein Monatslimit begrenzt die Menge.</li>
+      <li><b>Rechtsgrundlage:</b> berechtigtes Interesse des Betreibers an der Auswertung öffentlich veröffentlichter Rezensionen (Art. 6 Abs. 1 lit. f DSGVO). Für die Übermittlung in die USA gelten die Standardvertragsklauseln beziehungsweise das EU-US Data Privacy Framework des gewählten Anbieters und dessen Vertragsbedingungen zur Nutzung von Eingaben; der Betreiber wählt einen Anbieter, dessen API-Bedingungen die Verwendung der Eingaben zum Training ausschließen.</li>
+      <li><b>Fragen im Bericht:</b> Stellt der Betreiber Fragen direkt im Bericht, läuft dazu ein Dienst ausschließlich auf seinem eigenen Rechner (127.0.0.1); die Frage geht an denselben Anbieter wie oben, weitere Empfänger entstehen nicht. Der per URL bereitgestellte Bericht enthält diese Funktion nicht.</li>
+      <li><b>Ergebnis:</b> Die KI-Texte werden lokal in <code>data/</code> gespeichert und im Bericht als „KI“ gekennzeichnet. Sie sind Vorschläge; Antwortentwürfe werden nie automatisch an den Store gesendet. Zitate werden gegen den Originaltext geprüft.</li>
+    </ul>
+  </section>
+  <section class="card">
+    <h2>4b. Benachrichtigung (optional, nur wenn der Betreiber sie einschaltet)</h2>
+    <p>Der Betreiber kann sich nach dem täglichen Abruf benachrichtigen lassen, wenn neue Rezensionen mit ein oder zwei Sternen eingegangen sind, sich die Einstufung einer App (Ampel) geändert hat oder die Absturzrate gestiegen ist. Diese Funktion ist standardmäßig aus.</p>
+    <ul>
+      <li><b>Empfänger:</b> ausschließlich die vom Betreiber eingetragenen E-Mail-Adressen über seinen eigenen Mailserver, sein Slack-Arbeitsbereich (Slack Technologies, USA) oder ein von ihm selbst betriebener oder beauftragter Webhook-Dienst. Das Programm selbst betreibt keinen Dienst.</li>
+      <li><b>Übermittelte Daten:</b> je gemeldeter Rezension Sternebewertung, Datum, Land, App-Version, Titel und Text (auf 300 Zeichen gekürzt), der Name der App, die Gründe der Ampel und, falls die KI-Analyse aktiv ist, deren gespeicherter Kernsatz zur Rezension. Keine Nutzernamen (werden nicht gespeichert), keine Store-Kennung der Rezension, keine Zugangsdaten, keine Store-Kennzahlen. Für die Benachrichtigung erfolgt keine neue Anfrage an einen KI-Anbieter.</li>
+      <li><b>Übertragung:</b> E-Mail nur verschlüsselt (STARTTLS oder SSL), Webhooks nur über HTTPS. Zugangsdaten stehen ausschließlich in Umgebungsvariablen des Betreibers.</li>
+      <li><b>Rechtsgrundlage:</b> berechtigtes Interesse des Betreibers, auf öffentlich veröffentlichte Kritik an seinen Apps zeitnah reagieren zu können (Art. 6 Abs. 1 lit. f DSGVO). Bei Slack gelten dessen Datenschutzbestimmungen und Standardvertragsklauseln beziehungsweise das EU-US Data Privacy Framework.</li>
     </ul>
   </section>
   <section class="card">
@@ -94,6 +118,30 @@
       <li><b>Retention:</b> review data is added to continuously and not deleted automatically so that trends remain analysable over time. Deletion is a deliberate action by the operator (<code>reset</code>, with backup).</li>
       <li><b>Recipients:</b> the operator and the people to whom it provides the report or the summaries (e.g. the respective app customer). There is no disclosure to other third parties.</li>
       <li><b>Third countries:</b> when fetching, the tool communicates with Apple Inc. (USA) and Google LLC (USA) through their interfaces. The providers’ privacy policies and their standard contractual clauses or the EU-US Data Privacy Framework apply.</li>
+    </ul>
+  </section>
+  <section class="card">
+    <h2>4a. AI analysis (optional, only if the operator enables it)</h2>
+    <p>The operator can additionally have reviews analysed by a language model of an AI provider (summary per app, sentiment per review, reply drafts, topic suggestions, suggested measures, questions to the data). This function is off by default and becomes active only when the operator enables a provider in the configuration and supplies their own access key. Exactly one provider is active at a time.</p>
+    <ul>
+      <li><b>Possible recipients:</b> OpenAI (USA), Google LLC (Gemini, USA), Anthropic PBC (Claude, USA), Perplexity AI (USA) or xAI (Grok, USA), depending on the operator’s choice. The report names provider and model next to every AI text.</li>
+      <li><b>Local processing (provider “local”, e.g. Ollama or LM Studio):</b> if the operator chooses the local provider, the language model runs on the operator’s own computer; the reviews are passed only to that computer itself (127.0.0.1), there is no external recipient and no transfer to a third country. The remaining statements of this section apply accordingly.</li>
+      <li><b>Data transmitted:</b> title and text of the review (can be switched off via <code>sendReviewText</code>, then only figures are sent), star rating, date, app version, language, country, app name, whether a developer reply exists. Reviews are passed with running numbers; the store’s review identifier, user names (not stored anyway), credentials and store figures never leave the computer. The suggested measures come from a request without review texts; it contains only counts and the core statements the AI itself phrased earlier.</li>
+      <li><b>Competitors:</b> if the operator has listed third-party Apple apps as competitors, their public reviews (from Apple’s public feed, same fields per review) are sent to the provider as well, unless <code>analyzeCompetitors</code> is switched off; no reply drafts are produced for them.</li>
+      <li><b>Scope:</b> only new or changed reviews; an app’s summary is based on at most the most recent reviews (setting <code>summaryReviews</code>), a question on at most <code>maxReviewsPerQuestion</code> reviews. A monthly limit caps the volume.</li>
+      <li><b>Legal basis:</b> the operator’s legitimate interest in analysing publicly posted reviews (Art. 6 (1) (f) GDPR). Transfers to the USA are covered by the chosen provider’s standard contractual clauses or the EU-US Data Privacy Framework and its terms on the use of inputs; the operator chooses a provider whose API terms exclude using inputs for training.</li>
+      <li><b>Questions in the report:</b> if the operator asks questions directly in the report, a service runs solely on the operator’s own computer (127.0.0.1); the question goes to the same provider as above, no further recipients arise. The report published via URL does not contain this function.</li>
+      <li><b>Result:</b> the AI texts are stored locally in <code>data/</code> and marked “AI” in the report. They are suggestions; reply drafts are never sent to the store automatically. Quotes are checked against the original text.</li>
+    </ul>
+  </section>
+  <section class="card">
+    <h2>4b. Notification (optional, only if the operator enables it)</h2>
+    <p>After the daily fetch the operator can be notified when new reviews with one or two stars have arrived, an app’s rating status (traffic light) has changed or the crash rate has risen. This function is off by default.</p>
+    <ul>
+      <li><b>Recipients:</b> solely the e-mail addresses entered by the operator via their own mail server, their Slack workspace (Slack Technologies, USA) or a webhook service they run or commission themselves. The tool itself runs no service.</li>
+      <li><b>Data transmitted:</b> per reported review the star rating, date, country, app version, title and text (shortened to 300 characters), the app name, the reasons of the traffic light and, if the AI analysis is active, its stored one-line summary of the review. No user names (not stored), no store review identifier, no credentials, no store figures. No new request to an AI provider is made for the notification.</li>
+      <li><b>Transfer:</b> e-mail only encrypted (STARTTLS or SSL), webhooks only via HTTPS. Credentials live solely in the operator’s environment variables.</li>
+      <li><b>Legal basis:</b> the operator’s legitimate interest in reacting promptly to publicly posted criticism of their apps (Art. 6 (1) (f) GDPR). For Slack its privacy policy and standard contractual clauses or the EU-US Data Privacy Framework apply.</li>
     </ul>
   </section>
   <section class="card">

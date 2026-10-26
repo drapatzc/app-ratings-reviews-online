@@ -1,6 +1,5 @@
-// Textseiten (Hilfe, Impressum, Datenschutz): Sprache, Hell/Dunkel und Designfarbe wie im Bericht, gleiche Schlüssel im localStorage.
+// Textseiten (Hilfe, Impressum, Datenschutz): Sprache und Hell/Dunkel wie im Bericht, gleiche Schlüssel im localStorage.
 (function () {
-  const PALETTES = /*__PALETTES__*/[];
   // Sprache: Elemente mit lang="de" / lang="en" blendet das CSS je nach html[lang] ein oder aus.
   let LANG = "de"; try { LANG = localStorage.getItem("lang") || LANG; } catch (e) {}
   if (/\blang=en\b/.test(location.search)) LANG = "en"; if (/\blang=de\b/.test(location.search)) LANG = "de";
@@ -19,7 +18,4 @@
     document.documentElement.dataset.theme = next;
     try { localStorage.setItem("theme", next); } catch (e) {}
   });
-  let saved = null; try { saved = localStorage.getItem("palette"); } catch (e) {}
-  const pal = PALETTES.find(p => p[0] === saved) || PALETTES[0];
-  if (pal) { const st = document.documentElement.style; st.setProperty("--p-a", pal[2]); st.setProperty("--p-b", pal[3]); st.setProperty("--p-c", pal[4]); }
 })();

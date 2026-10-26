@@ -9,6 +9,8 @@ import html
 import re
 from pathlib import Path
 
+from .storage import write_text
+
 CSS = """
 :root{--bg:#f6f7fc;--card:#fff;--fg:#14162e;--muted:#5b6185;--line:#dfe2f0;--accent:#5b5bff;--code:#eef0fb}
 @media (prefers-color-scheme:dark){:root{--bg:#0b0d1c;--card:#151936;--fg:#eceefc;--muted:#9aa1c8;--line:#2a3058;--accent:#8f95ff;--code:#1d2246}}
@@ -36,27 +38,27 @@ def _safe_href(url: str) -> str | None:
 def inline(text: str) -> str:
     """Wandelt Inline-Markdown in HTML um; Eingabe wird zuerst vollständig maskiert."""
     codes: list[str] = []
-    text = re.sub(r"`([^`]+)`", lambda m: codes.append(m.group(1)) or f"\x00{len(codes) - 1}\x00", text)
+    text = re.sub(r"`([^`]+)`", lambda match: codes.append(match.group(1)) or f"\x00{len(codes) - 1}\x00", text)
     text = html.escape(text, quote=True)
 
-    def link(m: re.Match) -> str:
-        href = _safe_href(m.group(2))
-        return f'<a href="{html.escape(href, quote=True)}">{m.group(1)}</a>' if href else m.group(1)
+    def link(match: re.Match) -> str:
+        href = _safe_href(match.group(2))
+        return f'<a href="{html.escape(href, quote=True)}">{match.group(1)}</a>' if href else match.group(1)
 
     text = _LINK.sub(link, text)
     text = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", text)
     text = re.sub(r"(?<![*\w])\*([^*\s][^*]*)\*(?!\w)", r"<em>\1</em>", text)
     text = re.sub(r"(?<![\w])_([^_\s][^_]*)_(?!\w)", r"<em>\1</em>", text)
-    return re.sub(r"\x00(\d+)\x00", lambda m: f"<code>{html.escape(codes[int(m.group(1))])}</code>", text)
+    return re.sub(r"\x00(\d+)\x00", lambda match: f"<code>{html.escape(codes[int(match.group(1))])}</code>", text)
 
 
 def _cells(line: str) -> list[str]:
-    return [c.strip() for c in line.strip().strip("|").split("|")]
+    return [cell.strip() for cell in line.strip().strip("|").split("|")]
 
 
-def convert(md: str) -> str:
+def convert(source: str) -> str:
     """Markdown-Text → HTML-Fragment."""
-    lines, out, i = md.splitlines(), [], 0
+    lines, out, i = source.splitlines(), [], 0
     while i < len(lines):
         line = lines[i]
         if line.strip().startswith("```"):
@@ -67,29 +69,30 @@ def convert(md: str) -> str:
                 i += 1
             out.append("<pre><code>" + html.escape("\n".join(block)) + "</code></pre>")
             i += 1
-        elif m := re.match(r"^(#{1,6})\s+(.*)$", line):
-            n = len(m.group(1))
-            out.append(f"<h{n}>{inline(m.group(2))}</h{n}>")
+        elif match := re.match(r"^(#{1,6})\s+(.*)$", line):
+            level = len(match.group(1))
+            out.append(f"<h{level}>{inline(match.group(2))}</h{level}>")
             i += 1
         elif re.match(r"^\s*(-{3,}|\*{3,})\s*$", line):
             out.append("<hr>")
             i += 1
         elif line.lstrip().startswith("|") and i + 1 < len(lines) and re.match(r"^\s*\|?\s*:?-{2,}", lines[i + 1]):
-            head, aligns = _cells(line), [("right" if c.endswith(":") else "left") for c in _cells(lines[i + 1])]
+            head, aligns = _cells(line), [("right" if cell.endswith(":") else "left") for cell in _cells(lines[i + 1])]
             rows, i = [], i + 2
             while i < len(lines) and lines[i].lstrip().startswith("|"):
                 rows.append(_cells(lines[i]))
                 i += 1
-            th = "".join(f'<th style="text-align:{aligns[k] if k < len(aligns) else "left"}">{inline(c)}</th>' for k, c in enumerate(head))
-            body = "".join("<tr>" + "".join(f'<td style="text-align:{aligns[k] if k < len(aligns) else "left"}">{inline(c)}</td>'
-                                            for k, c in enumerate(r)) + "</tr>" for r in rows)
-            out.append(f"<table><thead><tr>{th}</tr></thead><tbody>{body}</tbody></table>")
+            align = lambda k: aligns[k] if k < len(aligns) else "left"  # noqa: E731
+            head_html = "".join(f'<th style="text-align:{align(k)}">{inline(cell)}</th>' for k, cell in enumerate(head))
+            body = "".join("<tr>" + "".join(f'<td style="text-align:{align(k)}">{inline(cell)}</td>'
+                                            for k, cell in enumerate(row)) + "</tr>" for row in rows)
+            out.append(f"<table><thead><tr>{head_html}</tr></thead><tbody>{body}</tbody></table>")
         elif line.startswith(">"):
             quote = []
             while i < len(lines) and lines[i].startswith(">"):
                 quote.append(lines[i][1:].lstrip())
                 i += 1
-            out.append("<blockquote>" + "<br>".join(inline(q) for q in quote) + "</blockquote>")
+            out.append("<blockquote>" + "<br>".join(inline(quoted) for quoted in quote) + "</blockquote>")
         elif re.match(r"^\s*([-*]|\d+\.)\s+", line):
             ordered = bool(re.match(r"^\s*\d+\.", line))
             items = []
@@ -97,7 +100,7 @@ def convert(md: str) -> str:
                 items.append(inline(re.sub(r"^\s*([-*]|\d+\.)\s+", "", lines[i])))
                 i += 1
             tag = "ol" if ordered else "ul"
-            out.append(f"<{tag}>" + "".join(f"<li>{x}</li>" for x in items) + f"</{tag}>")
+            out.append(f"<{tag}>" + "".join(f"<li>{item}</li>" for item in items) + f"</{tag}>")
         elif not line.strip():
             i += 1
         else:
@@ -106,20 +109,20 @@ def convert(md: str) -> str:
                     and not re.match(r"^\s*([-*]|\d+\.)\s+", lines[i]):
                 para.append(lines[i].strip())
                 i += 1
-            out.append("<p>" + " ".join(inline(p) for p in para) + "</p>")
+            out.append("<p>" + " ".join(inline(para_line) for para_line in para) + "</p>")
     return "\n".join(out)
 
 
-def to_page(md: str, title: str) -> str:
+def to_page(markdown: str, title: str) -> str:
     """Vollständige, eigenständige HTML-Seite (ohne externe Ressourcen)."""
     return ("<!DOCTYPE html><html lang=\"de\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
             "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'; img-src data:\">"
-            f"<title>{html.escape(title)}</title><style>{CSS}</style></head><body><main>{convert(md)}</main></body></html>")
+            f"<title>{html.escape(title)}</title><style>{CSS}</style></head><body><main>{convert(markdown)}</main></body></html>")
 
 
 def convert_file(source: Path, target_dir: Path) -> Path:
     """Schreibt `source` als HTML nach `target_dir/<name>.html` und gibt den Pfad zurück."""
     target_dir.mkdir(parents=True, exist_ok=True)
     target = target_dir / (source.stem + ".html")
-    target.write_text(to_page(source.read_text(encoding="utf-8"), source.stem), encoding="utf-8")
+    write_text(target, to_page(source.read_text(encoding="utf-8"), source.stem))
     return target

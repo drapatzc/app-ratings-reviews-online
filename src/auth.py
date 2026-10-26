@@ -23,6 +23,22 @@ def _b64(data: bytes) -> str:
     return base64.urlsafe_b64encode(data).rstrip(b"=").decode()
 
 
+def authorized_json(http: HttpClient, tokens, method: str, url: str, params: dict | None = None,
+                    json_body: dict | None = None):
+    """Anfrage mit Bearer-Token. Nach einem 401/403 wird das Token einmal erneuert und die Anfrage wiederholt.
+
+    `tokens` ist ein Provider mit `token()` und `invalidate()` (Apple oder Google). Einzige Stelle für diese Wiederholung."""
+    for attempt in (0, 1):
+        try:
+            return http.request_json(method, url, {"Authorization": f"Bearer {tokens.token()}"}, params,
+                                     json_body=json_body)
+        except AuthError:
+            if attempt:
+                raise
+            tokens.invalidate()
+    raise AuthError("Authentifizierung fehlgeschlagen.")  # pragma: no cover
+
+
 def _load_key(pem: str, label: str):
     try:
         return serialization.load_pem_private_key(pem.encode(), password=None)
@@ -51,8 +67,8 @@ class AppleTokenProvider:
             claims = {"iss": self.issuer_id, "iat": int(now), "exp": int(self._expires),
                       "aud": "appstoreconnect-v1"}
             signing = f"{_b64(json.dumps(header).encode())}.{_b64(json.dumps(claims).encode())}"
-            r, s = decode_dss_signature(self._key.sign(signing.encode(), ec.ECDSA(hashes.SHA256())))
-            self._token = f"{signing}.{_b64(r.to_bytes(32, 'big') + s.to_bytes(32, 'big'))}"
+            rval, sval = decode_dss_signature(self._key.sign(signing.encode(), ec.ECDSA(hashes.SHA256())))
+            self._token = f"{signing}.{_b64(rval.to_bytes(32, 'big') + sval.to_bytes(32, 'big'))}"
         return self._token
 
     def invalidate(self) -> None:
@@ -71,7 +87,10 @@ class GoogleTokenProvider:
             self._key = _load_key(info["private_key"], "Google-Schlüssel")
         except (ValueError, KeyError) as exc:
             raise ConfigError("Google Service Account: JSON ungültig (client_email/private_key fehlen).") from exc
-        self.token_uri = info.get("token_uri") or GOOGLE_DEFAULT_TOKEN_URI
+        # Fest auf Google: eine veränderte Datei soll den signierten Schlüsselnachweis nicht woandershin schicken.
+        if info.get("token_uri") not in (None, "", GOOGLE_DEFAULT_TOKEN_URI):
+            raise ConfigError(f"Google Service Account: token_uri muss {GOOGLE_DEFAULT_TOKEN_URI} sein.")
+        self.token_uri = GOOGLE_DEFAULT_TOKEN_URI
         self.http, self.clock, self.scope = http, clock, scope
         self._token: str | None = None
         self._expires = 0.0

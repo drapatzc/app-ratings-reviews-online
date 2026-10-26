@@ -7,6 +7,8 @@ import shutil
 import sys
 from datetime import datetime, timezone
 
+from .models import parse_iso
+
 COLOR = sys.stdout.isatty() and not os.environ.get("NO_COLOR")
 _ANSI = re.compile(r"\x1b\[[0-9;]*m")
 
@@ -28,14 +30,14 @@ def pad(text: str, width: int, align: str = "left") -> str:
 def table(headers: list[str], rows: list[list[str]], aligns: list[str] | None = None) -> str:
     """Zeichnet eine Rahmentabelle; Zellen dürfen Farbcodes enthalten."""
     aligns = aligns or ["left"] * len(headers)
-    widths = [max(visible_len(str(c)) for c in col) for col in zip(headers, *rows)] if rows else [len(h) for h in headers]
-    line = lambda l, m, r: paint(l + m.join("─" * (w + 2) for w in widths) + r, "35")  # noqa: E731
+    widths = [max(visible_len(str(cell)) for cell in col) for col in zip(headers, *rows)] if rows else [len(head) for head in headers]
+    line = lambda l, mid, right: paint(l + mid.join("─" * (col_width + 2) for col_width in widths) + right, "35")  # noqa: E731
     bar = paint("│", "35")
     out = [line("╭", "┬", "╮"),
-           bar + bar.join(f" {paint(pad(h, w, a), '1')} " for h, w, a in zip(headers, widths, aligns)) + bar,
+           bar + bar.join(f" {paint(pad(head, col_width, align), '1')} " for head, col_width, align in zip(headers, widths, aligns)) + bar,
            line("├", "┼", "┤")]
     for row in rows:
-        out.append(bar + bar.join(f" {pad(str(c), w, a)} " for c, w, a in zip(row, widths, aligns)) + bar)
+        out.append(bar + bar.join(f" {pad(str(cell), col_width, align)} " for cell, col_width, align in zip(row, widths, aligns)) + bar)
     out.append(line("╰", "┴", "╯"))
     return "\n".join(out)
 
@@ -45,19 +47,20 @@ def heading(text: str) -> str:
 
 
 def parse_ts(value: str | None) -> datetime | None:
+    """Zeitstempel aus Dateien für die Anzeige; ungültige oder fehlende Werte ergeben None statt eines Fehlers."""
     try:
-        return datetime.fromisoformat(value.replace("Z", "+00:00")) if value else None
+        return parse_iso(value) if value else None
     except ValueError:
         return None
 
 
 def ago(value: str | None, now: datetime | None = None) -> str:
     """„vor 5 Min", „vor 3 Std", „vor 2 Tagen" plus Datum (lokale Zeit); „–" ohne Wert."""
-    ts = parse_ts(value)
-    if ts is None:
+    stamp = parse_ts(value)
+    if stamp is None:
         return "–"
     now = now or datetime.now(timezone.utc)
-    seconds = max(0, int((now - ts).total_seconds()))
+    seconds = max(0, int((now - stamp).total_seconds()))
     if seconds < 90:
         rel = "gerade eben"
     elif seconds < 3600:
@@ -67,7 +70,7 @@ def ago(value: str | None, now: datetime | None = None) -> str:
     else:
         days = seconds // 86400
         rel = f"vor {days} Tag{'en' if days != 1 else ''}"
-    return f"{rel} ({ts.astimezone():%d.%m. %H:%M})"
+    return f"{rel} ({stamp.astimezone():%d.%m. %H:%M})"
 
 
 def status_badge(status: str | None) -> str:

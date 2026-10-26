@@ -23,3 +23,7 @@ class ApiError(ToolError):
     def __init__(self, message: str, status: int | None = None):
         super().__init__(message)
         self.status = status
+
+
+class NotifyError(ToolError):
+    """Benachrichtigung konnte nicht zugestellt werden (SMTP abgelehnt, Webhook-Fehler, Adresse fehlt)."""

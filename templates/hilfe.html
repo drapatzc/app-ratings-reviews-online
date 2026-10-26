@@ -14,7 +14,7 @@
 <body>
 <nav><div class="in">
   <div class="brand"><span class="logo"></span><span class="t">App-Feedback</span></div>
-  <div class="links"><a class="back" href="index.html"><span lang="de">← Zurück zum Bericht</span><span lang="en">← Back to report</span></a><a href="#ablauf"><span lang="de">Ablauf</span><span lang="en">Steps</span></a><a href="#install"><span lang="de">Installation</span><span lang="en">Install</span></a><a href="#apple">Apple</a><a href="#google">Google</a><a href="#config"><span lang="de">Konfiguration</span><span lang="en">Configuration</span></a><a href="#dateien"><span lang="de">Dateien</span><span lang="en">Files</span></a><a href="#befehle"><span lang="de">Befehle</span><span lang="en">Commands</span></a><a href="#menues"><span lang="de">Menüs</span><span lang="en">Menus</span></a><a href="#betrieb"><span lang="de">Betrieb</span><span lang="en">Operation</span></a><a href="#fehler"><span lang="de">Fehler</span><span lang="en">Errors</span></a></div>
+  <div class="links"><a class="back" href="index.html"><span lang="de">← Zurück zum Bericht</span><span lang="en">← Back to report</span></a><a href="#ablauf"><span lang="de">Ablauf</span><span lang="en">Steps</span></a><a href="#install"><span lang="de">Installation</span><span lang="en">Install</span></a><a href="#apple">Apple</a><a href="#google">Google</a><a href="#config"><span lang="de">Konfiguration</span><span lang="en">Configuration</span></a><a href="#dateien"><span lang="de">Dateien</span><span lang="en">Files</span></a><a href="#befehle"><span lang="de">Befehle</span><span lang="en">Commands</span></a><a href="#bericht"><span lang="de">Bericht</span><span lang="en">Report</span></a><a href="#ki">KI / AI</a><a href="#wettbewerber"><span lang="de">Wettbewerber</span><span lang="en">Competitors</span></a><a href="#menues"><span lang="de">Menüs</span><span lang="en">Menus</span></a><a href="#betrieb"><span lang="de">Betrieb</span><span lang="en">Operation</span></a><a href="#benachrichtigung"><span lang="de">Benachrichtigung</span><span lang="en">Notification</span></a><a href="#fehler"><span lang="de">Fehler</span><span lang="en">Errors</span></a></div>
   <span class="langs" id="langs" role="group" aria-label="Sprache / Language"><button type="button" data-lang="de" aria-pressed="true">DE</button><span>|</span><button type="button" data-lang="en" aria-pressed="false">EN</button></span>
   <button id="theme" class="iconbtn" type="button" aria-label="Farbschema wechseln / Switch theme" title="Hell / Dunkel">◐</button>
 </div></nav>
@@ -31,7 +31,7 @@
       <div class="step"><b>2. Apple-Zugang</b><span>Team-Schlüssel (.p8), Issuer ID, Key ID, App-IDs, Analytics-Berichtsanfrage.</span></div>
       <div class="step"><b>3. Google-Zugang</b><span>Nur bei Android: Service Account (JSON), in Play Console einladen, Paketnamen.</span></div>
       <div class="step"><b>4. Konfigurieren</b><span><code>config/config.json</code>: Kunden, Zugangsdaten, Apps. Schlüssel nach <code>keys/</code>.</span></div>
-      <div class="step"><b>5. Prüfen</b><span><code>./ratings.sh apps</code>, <code>dry-run</code>, dann <code>fetch</code>, <code>stability</code>, <code>testdata</code>, <code>report</code>.</span></div>
+      <div class="step"><b>5. Prüfen</b><span><code>./ratings.sh apps</code>, <code>dry-run</code>, dann <code>fetch</code>, <code>stability</code>, <code>store</code>, <code>testdata</code>, <code>report</code>.</span></div>
       <div class="step"><b>6. Automatisieren</b><span>Täglich <code>./ratings.sh daily</code> per cron oder systemd; Bericht bereitstellen; Backup.</span></div>
     </div>
   </section>
@@ -67,7 +67,7 @@ mkdir -p keys &amp;&amp; chmod 700 keys &amp;&amp; chmod 600 config/config.json
       <tr><td>Issuer ID</td><td>UUID, z. B. <code>11111111-2222-3333-4444-555555555555</code></td><td><code>credentials.apple.issuerId</code></td></tr>
       <tr><td>Key ID</td><td>10 Zeichen, z. B. <code>ABC123DEFG</code>, steht im Dateinamen der .p8</td><td><code>credentials.apple.keyId</code></td></tr>
       <tr><td>Privater Schlüssel</td><td>Datei <code>AuthKey_ABC123DEFG.p8</code> (Text, beginnt mit <code>-----BEGIN PRIVATE KEY-----</code>)</td><td><code>credentials.apple.privateKeyFile</code> (Pfad) oder <code>privateKeyEnvironmentVariable</code> (Name einer Umgebungsvariable mit Pfad oder Schlüsseltext)</td></tr>
-      <tr><td>App-ID</td><td>Zahl, z. B. <code>1540650069</code></td><td><code>apps[].platforms.apple.appId</code></td></tr>
+      <tr><td>App-ID</td><td>Zahl, z. B. <code>1234567890</code></td><td><code>apps[].platforms.apple.appId</code></td></tr>
     </tbody></table></div>
     <p class="note">Aus Issuer ID, Key ID und Schlüssel erzeugt das Programm selbst ein kurzlebiges Token (ES256, 15 Minuten). Es muss nichts von Hand erzeugt werden. Alle Aufrufe sind nur lesend. Der Schlüsseltext darf nie in <code>config.json</code> stehen; das Programm lehnt das ab.</p>
   </section>
@@ -101,7 +101,7 @@ mkdir -p keys &amp;&amp; chmod 700 keys &amp;&amp; chmod 600 config/config.json
         "google": { "serviceAccountFile": "./keys/kunde-a-google.json" }
       },
       "apps": [
-        { "id": "meine-app", "name": "Meine App", "enabled": true, "platforms": {
+        { "id": "meine-app", "name": "Meine App", "enabled": true, "audience": 250000, "platforms": {
             "apple":  { "enabled": true, "appId": "1234567890", "countries": [], "ratingCountries": ["DE"] },
             "google": { "enabled": false, "packageName": "de.firma.app", "languages": [] } } }
       ]
@@ -111,6 +111,9 @@ mkdir -p keys &amp;&amp; chmod 700 keys &amp;&amp; chmod 600 config/config.json
     <ul>
       <li><b>Je Kunde eigene <code>credentials</code></b>, weil Apple-Schlüssel an das Entwicklerkonto gebunden sind. Mehrere Kunden unter einem Konto: denselben Schlüssel bei jedem eintragen. Ein Google-Service-Account kann in mehrere Play Consoles eingeladen werden.</li>
       <li><b><code>ratingCountries</code>:</b> Länder, für die die offizielle Store-Note geholt wird (eine Anfrage je App und Land pro Lauf; <code>[]</code> = aus). <code>countries</code> bei Apple und <code>languages</code> bei Google leer lassen (alle).</li>
+      <li><b><code>audience</code> (optional):</b> Größe der Zielgruppe der App, etwa die Zahl der Kunden des Anbieters. Nur damit zeigt der Bericht „Downloads je 1000 der Zielgruppe“; ohne Angabe bleibt die Spalte leer.</li>
+      <li><b><code>competitors</code> (optional, je Kunde):</b> fremde Apple-Apps, die neben den eigenen ausgewertet werden, ohne Zugang: je Eintrag <code>id</code>, <code>name</code>, optional <code>vendor</code>, dazu <code>apple.appId</code> (aus dem App-Store-Link) und <code>apple.countries</code> (Pflicht, z. B. <code>["DE"]</code>). Quelle: öffentlicher Apple-Feed (jüngste 500 Rezensionen je Land) und iTunes Lookup. Nur Apple; für Google gibt es keine öffentliche Quelle. Ohne Einträge erscheint im Bericht nichts dazu; mit Einträgen gibt es den Reiter „Wettbewerber“ und die Einträge im App-Filter mit Präfix „Wettbewerber:“.</li>
+      <li><b><code>config/themen.json</code> (versioniert, keine Geheimnisse):</b> Wortlisten für den Bereich „Themen und Wörter“ im Bericht. Je Thema <code>id</code>, Name <code>de</code>/<code>en</code>, Art (<code>problem</code>, <code>wunsch</code>, <code>lob</code>, <code>bedienung</code>, <code>thema</code>), optional <code>bereich</code> (<code>app</code> oder <code>anbieter</code>, für die Frage „Liegt es an der App oder am Anbieter?“) und <code>terms</code> (Begriffe in Kleinschreibung; Treffer am Wortanfang, bis drei Zeichen nur als ganzes Wort, <code>*</code> davor auch mitten im Wort, <code>=</code> davor nur das ganze Wort) sowie optional <code>nicht</code> (Phrasen, in denen ein Treffer nicht zählt, etwa „keine Fehler“). Neue Begriffe einfach ergänzen und den Bericht neu erzeugen; die Zuordnung läuft im Browser, ohne API-Aufruf.</li>
       <li><b>Umgebungsvariablen statt Dateien:</b> <code>privateKeyEnvironmentVariable</code> bzw. <code>serviceAccountEnvironmentVariable</code> nennen den Namen der Variable (Inhalt: Pfad oder Schlüsseltext). Praktisch für CI.</li>
     </ul>
     <div class="tablewrap" style="max-height:none"><table><thead><tr><th>Einstellung</th><th>Bedeutung</th><th>Standard</th></tr></thead><tbody>
@@ -133,6 +136,7 @@ mkdir -p keys &amp;&amp; chmod 700 keys &amp;&amp; chmod 600 config/config.json
       <tr><td><code>keys/*-google.json</code></td><td>Google-Service-Account-Schlüssel je Kunde</td><td><code>600</code>, nie ins Repository</td></tr>
       <tr><td><code>~/.zshrc</code> oder <code>/usr/local/bin/bew</code></td><td>optional: Alias oder Symlink auf <code>menu.sh</code>, damit das Menü von überall startet</td><td></td></tr>
       <tr><td><code>crontab</code> oder systemd-Unit</td><td>täglicher Lauf (siehe Betrieb)</td><td></td></tr>
+      <tr><td>Umgebungsvariablen des Zeitplaners</td><td>optional: KI-Schlüssel, SMTP-Passwort oder Webhook-Adresse für die Benachrichtigung; nie in <code>config.json</code></td><td></td></tr>
     </tbody></table></div>
     <p class="note">Das Programm selbst erzeugt <code>data/</code> (Rezensionen als JSON, bleibt dauerhaft), <code>reports/index.html</code> (Bericht), <code>reports/hilfe.html</code>, <code>impressum.html</code>, <code>datenschutz.html</code> (diese Seiten), <code>reports/markdown/</code> (Zusammenfassungen) und <code>backups/</code> (vor dem Löschen). Nichts davon ist im Repository. Es wird nie etwas gelöscht, außer bewusst über <code>./ratings.sh reset</code> mit Backup und Bestätigung <code>LOESCHEN</code>.</p>
   </section>
@@ -149,8 +153,17 @@ mkdir -p keys &amp;&amp; chmod 700 keys &amp;&amp; chmod 600 config/config.json
       <tr><td><code>range VON BIS [opt]</code> (zeitraum)</td><td>nur diesen Zeitraum (YYYY-MM-DD)</td></tr>
       <tr><td><code>stability [opt]</code> (stabilitaet)</td><td>Abstürze und Sitzungen aus Apple Analytics (erster Lauf 100 bis 150 Anfragen je App)</td></tr>
       <tr><td><code>testdata [opt]</code> (testbetrieb)</td><td>Apple TestFlight und Google-Testspuren</td></tr>
-      <tr><td><code>all [opt]</code> (alles)</td><td>Rezensionen, Stabilität und Testbetrieb abrufen, Bericht erzeugen, Browser öffnen</td></tr>
-      <tr><td><code>daily [opt]</code> (taeglich)</td><td>für cron und CI: Abruf höchstens einmal pro Tag, Bericht immer neu</td></tr>
+      <tr><td><code>competitors [opt]</code> (wettbewerber)</td><td>Wettbewerber-Apps aus <code>customers[].competitors</code> über den öffentlichen Apple-Feed und iTunes Lookup holen, ohne Zugang (nur Apple, jüngste 500 Rezensionen je Land); ohne Einträge nur ein Hinweis</td></tr>
+      <tr><td><code>all [opt]</code> (alles)</td><td>Rezensionen, Stabilität, Testbetrieb, Wettbewerber (nur Apple, falls eingetragen) und (falls ein Anbieter freigeschaltet ist) KI-Analyse abrufen, Bericht erzeugen, Browser öffnen</td></tr>
+      <tr><td><code>analyze [opt]</code> (ki)</td><td>KI-Analyse der gespeicherten Rezensionen: nur Neues wird gesendet, danach wird der Bericht neu erzeugt; braucht einen freigeschalteten Anbieter (siehe KI-Analyse)</td></tr>
+      <tr><td><code>ask "Frage" [opt]</code> (frage)</td><td>Freitextfrage an die Rezensionen der Auswahl, Antwort mit Belegen; nur mit <code>ai.features.questions</code>. Auswahl: <code>--customer</code>, <code>--app</code> (mehrfach), <code>--platform</code>, <code>--from</code>, <code>--to</code>, <code>--stars-min</code>, <code>--stars-max</code>; im Bericht gilt die ganze Filterauswahl</td></tr>
+      <tr><td><code>ai-themes [--accept NR | --ignore NR]</code> (ki-themen)</td><td>Themenvorschläge der KI anzeigen, übernehmen oder ablehnen</td></tr>
+      <tr><td><code>ai-usage</code> (ki-verbrauch)</td><td>aktiver Anbieter und Tokens je Monat, ohne Netz</td></tr>
+      <tr><td><code>ai-report [opt]</code> (ki-bericht)</td><td>ein Befehl: lokalen Fragedienst starten, Bericht neu erzeugen, im Browser öffnen; läuft bis Strg+C, solange kann man unter „Fragen an die Daten“ direkt fragen</td></tr>
+      <tr><td><code>ai-serve [--port N]</code> (ki-dienst)</td><td>nur der Fragedienst (127.0.0.1); den Bericht dann selbst neu erzeugen</td></tr>
+      <tr><td><code>ai-questions [--delete NR | --clear]</code> (ki-fragen)</td><td>gespeicherte Fragen nummeriert anzeigen, eine oder alle löschen; ohne Netz</td></tr>
+      <tr><td><code>daily [opt]</code> (taeglich)</td><td>für cron und CI: Abruf höchstens einmal pro Tag, Bericht immer neu, zuletzt die Benachrichtigung (falls eingeschaltet)</td></tr>
+      <tr><td><code>notify [--dry-run | --test]</code> (benachrichtigen)</td><td>Benachrichtigung nach dem Tageslauf (neue 1–2 ★, Ampelwechsel, Absturzsprung) per E-Mail, Slack oder Webhook; <code>--dry-run</code> zeigt die Nachricht, <code>--test</code> schickt eine Testnachricht; liest nur <code>data/</code>, kein Netz zu den Stores (siehe Benachrichtigung)</td></tr>
       <tr><td><code>report</code> (bericht) / <code>open</code> (oeffnen)</td><td>Bericht erzeugen und öffnen / nur öffnen. <code>report --customer ID</code> ergibt einen Bericht nur für diesen Kunden</td></tr>
       <tr><td><code>markdown</code></td><td>Markdown-Zusammenfassungen plus ZIP zum Versenden</td></tr>
       <tr><td><code>status</code> / <code>apps</code></td><td>Status je App / konfigurierte Apps, beides ohne Netz</td></tr>
@@ -170,38 +183,107 @@ mkdir -p keys &amp;&amp; chmod 700 keys &amp;&amp; chmod 600 config/config.json
     <p class="note">Exit-Codes: 0 alles in Ordnung, 1 mindestens ein Ziel fehlgeschlagen oder teilweise, 2 Konfigurations- oder Aufruffehler. Direkt ohne Hülle: <code>python collect.py [Optionen]</code> und <code>python report.py [--customer ID] [--app ID] [--platform P]</code>.</p>
   </section>
 
+  <section class="card" id="bericht">
+    <h2>Der Bericht</h2>
+    <p>Eine einzige HTML-Datei (<code>reports/index.html</code>), die offline funktioniert. Oben steht der Filter (Kunde, App, Plattform, Zeitraum, Freitextsuche; „Erweitert“ mit Sprache, Land, Version, Betriebssystem, Gerät, Thema, Sternen, Entwicklerantwort, Von/Bis), alles darunter folgt ihm. Klick auf „App-Feedback“ oben links führt zum Überblick an den Seitenanfang. Sprache (DE/EN) und Hell/Dunkel oben rechts; jeder Bereich hat ein rotes <b>i</b> mit Erklärung und einen Pfeil zum Zuklappen.</p>
+    <div class="tablewrap" style="max-height:none"><table><thead><tr><th>Reiter</th><th>Inhalt</th></tr></thead><tbody>
+      <tr><td>Überblick</td><td>drei Antworten (wie läuft es, was ist auffällig, was hat das letzte Update verändert), „Das sollten wir tun“ (mit KI), Ampel je App; „Mehr Zahlen anzeigen“ öffnet Fragen und Antworten, die wichtigsten Zahlen je App, Vergleich nach Version und alle Updates</td></tr>
+      <tr><td>Rezensionen</td><td>Durchschnitt aus den Rezensionen, Kennzahlen, „Themen und Wörter“ (mit KI drei Knöpfe als Overlay), die Rezensionen selbst mit Detailansicht, „Antworten des Supports“ (mit KI Antwortentwürfe)</td></tr>
+      <tr><td>Stabilität</td><td>Abstürze und Sitzungen nach Version, System, Gerät, Wochenverlauf (nur Apple)</td></tr>
+      <tr><td>Downloads &amp; Store</td><td>Apps im Vergleich (mit App-Bericht zum Drucken), Sterne im App Store, neueste Version im Store</td></tr>
+      <tr><td>Diagramme</td><td>neunzehn Diagramme, Auswahlbox, Pfeile, Vergrößern</td></tr>
+      <tr><td>Wettbewerber</td><td>nur mit eingetragenen Wettbewerbern (siehe unten)</td></tr>
+      <tr><td>KI-Anfragen</td><td>nur bei laufendem Fragedienst: Frage eingeben oder aus 20 vorbereiteten wählen, gespeicherte Antworten mit Belegen</td></tr>
+      <tr><td>Datenstand</td><td>wie vollständig die Daten sind: Grenzen der Quellen, letzter Abruf je App, Lücken</td></tr>
+    </tbody></table></div>
+    <h3>Drucken und Zwischenablage</h3>
+    <ul>
+      <li><b>Je Reiter:</b> Oben in der Karte (Überblick, Themen und Wörter, Stabilität, Downloads &amp; Store, Diagramme) stehen „Bericht drucken“ (im Überblick „Monatsbericht drucken“: letzte 30 Tage mit Lage, Ampel, Maßnahmen, mit KI die Stimmen der Nutzer) und „In Zwischenablage“. Der Themen-Bericht enthält Gesamtbewertung, Kennzahlen und die Themen für alle und für negative Rezensionen (mit KI die meistgewünschten Funktionen); der Diagramm-Bericht zehn Diagramme, bei fehlender Plattform mit „Nur für iOS/Android“.</li>
+      <li><b>Gesamtbericht:</b> „Bericht drucken“ und „In Zwischenablage“ neben „Filter zurücksetzen“ geben alle verfügbaren Berichte nach Reitern gruppiert aus. Liegen KI-Fragen vor, fragt der Bericht vorher, ob sie mit hinein sollen; „Nein“ lässt den Block weg.</li>
+      <li><b>Jeder Ausdruck</b> beginnt mit Datum und Uhrzeit und dem eingestellten Filter. Im Druckdialog „Als PDF sichern“: Der Dateiname ist vorgeschlagen, etwa <code>Monatsbericht-BKK-Linden-20261025-233856</code>. Ohne KI enthält kein Ausdruck KI-Texte.</li>
+      <li><b>Zwischenablage:</b> derselbe Bericht mit Formatierung, Diagramme als Bilder, zum Einfügen in Word, Outlook, Teams oder Jira (in Jira und Teams hängt die Bildübernahme vom Editor ab). Bei jeder KI-Frage kopiert der Knopf neben „Löschen“ Frage, Antwort und Belege als Text.</li>
+      <li><b>Zurücksetzen</b> (rechts daneben) leert nach Rückfrage den Filter und löscht alle gespeicherten KI-Anfragen; auf der Platte nur bei laufendem Fragedienst, sonst erscheint ein Hinweis.</li>
+    </ul>
+  </section>
+
+  <section class="card" id="ki">
+    <h2>KI-Analyse (optional)</h2>
+    <p>Zusätzlich zu den Zahlen kann ein Sprachmodell die Rezensionen lesen: Zusammenfassung je App in drei Sätzen mit Zitaten als Beleg, Stimmung und Dringlichkeit je Rezension (auch wo die Sterne täuschen), frei erkannte Themen mit Vorschlägen für <code>config/themen.json</code>, Häufungen nach Version, Vergleich der Apps, Antwortentwürfe für offene 1–2-★-Rezensionen und Freitextfragen. Dazu eine Maßnahmenliste je App (Zuständigkeit, Wirkung, Anteil der betroffenen negativen Rezensionen), die meistgewünschten Funktionen und eine Wirkungskontrolle je Update. Es gibt keinen eigenen KI-Reiter: Jeder KI-Text steht in dem Bereich, der die Frage beantwortet (Überblick „Das sollten wir tun“ und „Was sagen die Nutzer?“, Reiter Rezensionen, „Themen und Wörter“, „Antworten des Supports“, „Apps im Vergleich“, „Was ein Update verändert hat“); nur „Fragen an die Daten“ hat einen eigenen Reiter „KI-Anfragen“.</p>
+    <p><b>Einschalten:</b> In <code>config/config.json</code> den Block <code>ai</code> aus <code>config.example.json</code> übernehmen. Die KI ist nur aktiv, wenn ein Anbieter in <code>ai.providers</code> <code>"enabled": true</code> hat <b>und</b> die in <code>apiKeyEnvironmentVariable</code> genannte Umgebungsvariable einen Schlüssel enthält (zum Beispiel <code>export ANTHROPIC_API_KEY=…</code>). Sind mehrere freigeschaltet, zählt der erste in der Liste; wechseln heißt Reihenfolge ändern oder <code>enabled</code> umstellen. Anbieter: <code>openai</code>, <code>gemini</code>, <code>anthropic</code>, <code>perplexity</code>, <code>xai</code> (Cloud) oder <code>local</code> (lokales Modell auf dem eigenen Rechner, ohne Schlüssel und kostenlos, z. B. Ollama oder LM Studio; bei Ollama installieren, <code>ollama pull llama3.1:8b</code>, Anbieter einschalten; Einrichtung und Modellwahl in <code>KI.md</code>); das Modell je Anbieter ist frei wählbar (<code>model</code>). Ohne aktiven Anbieter gibt es weder den Befehl noch KI-Inhalte im Bericht.</p>
+    <p><b>Kosten:</b> Es werden nur neue oder geänderte Rezensionen gesendet. <code>monthlyTokenLimit</code> ist eine harte Bremse je Kalendermonat; <code>./ratings.sh ai-usage</code> zeigt den Verbrauch. Freitextfragen (<code>ai.features.questions</code>) sind standardmäßig aus, weil jede Frage eine Anfrage kostet. Preise stehen beim Anbieter; das Programm speichert keine.</p>
+    <p><b>Datenschutz:</b> Gesendet werden Rezensionstext und Titel (abschaltbar: <code>sendReviewText: false</code>), Sterne, Datum, App-Version, Sprache, Land und App-Name; nie Nutzernamen, Rezensions-IDs, Zugangsdaten oder Store-Kennzahlen. Jede KI-Aussage trägt die Marke „KI“ und nennt Anbieter, Modell und Datum. Zitate werden gegen den Originaltext geprüft; Antwortentwürfe werden nie gesendet, nur zum Kopieren angezeigt. Details in der Datenschutzerklärung, Abschnitt 4a.</p>
+    <p><b>Fragen direkt im Bericht:</b> <code>./ratings.sh ai-report</code> erledigt alles in einem Schritt: Dienst starten, Bericht erzeugen, Browser öffnen. Dahinter steckt <code>./ratings.sh ai-serve</code>, das einen kleinen Dienst, der nur auf diesem Rechner (127.0.0.1) erreichbar ist. Wird der Bericht erzeugt, während er läuft, erscheint im Reiter „KI-Anfragen“ ein Eingabefeld, daneben „Fragen wählen …“ mit 20 vorgefertigten Fragen aus <code>config/fragen.json</code> (frei änderbar; ein Klick stellt die Frage sofort); der Bericht darf dann genau diesen Port ansprechen, sonst macht er keine Netzanfragen. Schutz: zufälliges Token je Start, nur erlaubte Browser-Herkunft, Anfragen auf 4 KB begrenzt, dasselbe Budget wie sonst. Strg+C beendet den Dienst; der auf dem Server bereitgestellte Bericht kann keine Fragen stellen.</p>
+<pre><code>./ratings.sh analyze                   # alle Apps, nur Neues wird gesendet
+./ratings.sh analyze --dry-run         # zeigt nur, was gesendet würde
+./ratings.sh ask "Welche Apps erwähnen das Bonusprogramm?" --customer kasse-nord
+./ratings.sh ai-themes                 # Vorschläge nummeriert; --accept 2 übernimmt, --ignore 2 lehnt ab
+./ratings.sh ai-usage                  # Anbieter, Begründung je Anbieter, Tokens je Monat
+./ratings.sh ai-questions              # gespeicherte Fragen; --delete NR oder --clear löscht
+./ratings.sh ai-models                 # unterstützte Modelle je Anbieter mit Listenpreisen</code></pre>
+    <p><b>Im Bericht:</b> Alle KI-Texte tragen die Marke „KI“. Sie stehen im Überblick („Das sollten wir tun“, „Was sagen die Nutzer?“), bei den Rezensionen (Stimmungsleiste, Kacheln, drei Knöpfe unter „Themen und Wörter“, Antwortentwürfe), bei „Apps im Vergleich“ und „Was ein Update verändert hat“ sowie im Reiter „KI-Anfragen“. In den Ausdrucken erscheinen sie nur mit eingeschalteter KI; der Gesamtbericht fragt vorher, ob die gespeicherten KI-Anfragen mit hinein sollen. Menü: Hauptmenü Punkt 9 (KI-Analyse) und Punkt 5 (Bericht mit Fragedienst), Kurzmenü Punkt 4.</p>
+  </section>
+
+  <section class="card" id="wettbewerber">
+    <h2>Wettbewerber (optional, nur Apple)</h2>
+    <p>Fremde Apple-Apps lassen sich neben den eigenen auswerten, ohne Zugang: Das Programm liest den öffentlichen Apple-Feed (neueste 500 Rezensionen je Land) und den iTunes Lookup (Store-Note, Bewertungen gesamt, Version). Für Google gibt es keinen öffentlichen Weg.</p>
+    <ul>
+      <li><b>Einrichten:</b> in <code>config/config.json</code> je Kunde den Block <code>competitors</code> (Vorlage in <code>config.example.json</code>): je Eintrag <code>id</code>, <code>name</code>, optional <code>vendor</code>, dazu <code>apple.appId</code> aus dem App-Store-Link und die Länder. Ohne Einträge ändert sich am Bericht nichts.</li>
+      <li><b>Abrufen:</b> <code>./ratings.sh competitors</code>, in <code>all</code> und <code>daily</code> enthalten; Menü: Daten abrufen → Wettbewerber.</li>
+      <li><b>Im Bericht:</b> eigener Reiter „Wettbewerber“ mit Tabelle (Hersteller, Store-Note, Bewertungen gesamt, Rezensionen der letzten 90 Tage, Ampel nach denselben Regeln) und Steckbrief je App; mit KI, was die Nutzer loben und bemängeln. Der Reiter folgt dem Kunden im Filter. Wettbewerber zählen sonst nirgends mit: nicht im Überblick, nicht in den Ausdrucken, nicht in der Benachrichtigung.</li>
+      <li><b>Datenschutz:</b> gespeichert werden nur Rezensionstexte und Kennzahlen aus dem öffentlichen Feed, keine Nutzernamen; mit KI gehen auch diese Texte an den Anbieter.</li>
+    </ul>
+  </section>
+
   <section class="card" id="menues">
     <h2>Die zwei Menüs</h2>
     <p>Beide starten von jedem Ordner aus, richten das <code>.venv</code> beim ersten Mal ein und melden eine fehlende <code>config.json</code>. Tasten: Zahl = Auswahl, <code>H</code> = Hilfe zum jeweiligen Menü, <code>0</code> = eine Ebene zurück, <code>Q</code> = beenden. Oben stehen der letzte erfolgreiche Abruf, das Alter des Berichts und die aktuelle Auswahl. Jeder Befehl wird vor dem Start angezeigt; nach einer Ausgabe wartet das Menü auf Enter.</p>
     <h3>Großes Menü: <code>menu.sh</code> (oder <code>./ratings.sh menu</code>)</h3>
     <div class="tablewrap" style="max-height:none"><table><thead><tr><th>Nr.</th><th>Punkt</th><th>Wirkung</th></tr></thead><tbody>
-      <tr><td>1</td><td>Alles auf einmal</td><td>Rezensionen und Stabilität abrufen, Bericht erzeugen, Browser öffnen</td></tr>
-      <tr><td>2</td><td>Daten abrufen</td><td>automatisch, vollständig, Wartefrist ignorieren, Stabilität, Testbetrieb, beides, Probelauf, Zeitraum; „Bericht danach öffnen“ umschalten</td></tr>
+      <tr><td>1</td><td>Alles auf einmal</td><td>Rezensionen, Stabilität, Store-Kennzahlen, Testbetrieb und Wettbewerber (falls eingetragen) abrufen, mit KI auch analysieren, Bericht erzeugen, Browser öffnen</td></tr>
+      <tr><td>2</td><td>Daten abrufen …</td><td>automatisch, vollständig, Wartefrist ignorieren, Stabilität, Store-Kennzahlen, Testbetrieb, Wettbewerber (nur Apple), alles, Probelauf, Zeitraum; „Bericht danach öffnen“ umschalten</td></tr>
       <tr><td>3</td><td>Bericht erzeugen und öffnen</td><td>mit der aktuellen Auswahl (Kunde, App, Plattform)</td></tr>
       <tr><td>4</td><td>Letzten Bericht nur öffnen</td><td>ohne Neuerzeugung</td></tr>
-      <tr><td>5</td><td>Auswahl ändern</td><td>Kunde, App, Plattform, Zeitraum; gilt für alle Abrufe und Berichte</td></tr>
-      <tr><td>6</td><td>Status und Übersicht</td><td>Status je App, konfigurierte Apps, Tests</td></tr>
-      <tr><td>7</td><td>Google-CSV importieren</td><td>Play-Console-Export; Kunde und App vorher unter 5 wählen</td></tr>
-      <tr><td>8</td><td>Markdown-Dateien</td><td>Dokumentation und 14-Tage-Zusammenfassungen im Browser oder Editor öffnen, neu erzeugen, ZIP zum Versenden</td></tr>
-      <tr><td>9</td><td>Daten löschen und neu anfangen</td><td>nur Auswahl oder alles; immer Backup und Rückfrage; Konfiguration und Schlüssel bleiben</td></tr>
+      <tr><td>5</td><td>Bericht mit KI-Fragedienst</td><td>Fragedienst starten, Bericht neu erzeugen und öffnen (<code>ai-report</code>); Fragen direkt im Bericht; Strg+C beendet; nur mit freigeschaltetem Anbieter</td></tr>
+      <tr><td>6</td><td>Auswahl ändern …</td><td>Kunde, App, Plattform, Zeitraum, alles zurücksetzen; gilt für alle Abrufe und Berichte</td></tr>
+      <tr><td>7</td><td>Status und Übersicht …</td><td>Status je App, konfigurierte Apps, Tests, Benachrichtigung ansehen (Probelauf) oder testen</td></tr>
+      <tr><td>8</td><td>Google-CSV importieren</td><td>Play-Console-Export; Kunde und App vorher unter 6 wählen</td></tr>
+      <tr><td>9</td><td>KI-Analyse …</td><td>analysieren, Probelauf, Frage stellen, gespeicherte Fragen ansehen, Themenvorschläge übernehmen oder ablehnen, Anbieter und Verbrauch, Fragedienst starten; nur mit freigeschaltetem Anbieter</td></tr>
+      <tr><td>10</td><td>Markdown-Dateien …</td><td>Dokumentation und 14-Tage-Zusammenfassungen im Browser oder Editor öffnen, neu erzeugen, ZIP zum Versenden</td></tr>
+      <tr><td>11</td><td>Daten löschen und neu anfangen …</td><td>nur Auswahl oder alles, Trockenlauf; immer Backup und Rückfrage; Konfiguration und Schlüssel bleiben</td></tr>
     </tbody></table></div>
     <h3>Kurzmenü: <code>kurzmenu.sh</code></h3>
     <div class="tablewrap" style="max-height:none"><table><thead><tr><th>Nr.</th><th>Punkt</th><th>Wirkung</th></tr></thead><tbody>
       <tr><td>1</td><td>Alles abrufen</td><td>Rezensionen, Stabilität und Testbetrieb, danach Bericht und Markdown neu erzeugen (kein ZIP, kein Browser)</td></tr>
       <tr><td>2</td><td>Status</td><td>Status je App, ohne Netz</td></tr>
       <tr><td>3</td><td>Bericht anzeigen</td><td>im Browser öffnen; wird erzeugt, falls er fehlt</td></tr>
+      <tr><td>4</td><td>Bericht mit Fragen an die KI anzeigen</td><td>lokalen Fragedienst starten, Bericht neu erzeugen und öffnen (<code>ai-report</code>); läuft bis Strg+C, nur mit freigeschaltetem KI-Anbieter. Im Hauptmenü ist das ebenfalls Punkt 5</td></tr>
     </tbody></table></div>
+    <h3>Kurzmenü im Debug-Modus: <code>kurzmenudebug.sh</code></h3>
+    <p>Gleiche drei Punkte, aber nur mit erfundenen Testdaten (<code>config/config.debug.json</code>, <code>data-debug/</code>, <code>reports-debug/</code>). Es wird keine Anfrage an Apple oder Google gesendet; echte Daten und Bericht bleiben unverändert. <code>1</code> löscht die Testdaten und erzeugt neue: Kategorien (Krankenkassen mit 30 Apps eines Softwarehauses, Spiele, Navigation, Sport, KI, Nachrichten, Finanzen, Reisen, Büro), Umfang (wenig, mittel, viele, sehr viele), Zeitraum (3 bis 24 Monate) und Rezensionen je App als Bereich; danach wird der Bericht erzeugt. Ist ein KI-Anbieter freigeschaltet, fragt das Menü, ob die KI-Analyse über die Testdaten laufen soll (kostet Anfragen). Kommandozeile: <code>./ratings.sh demo --list-categories</code>, <code>./ratings.sh demo --categories krankenkassen --volume viele --months 12 --reviews 50-400</code>.</p>
     <p class="note">Kurzbefehl einrichten, damit <code>bew</code> das Menü von überall startet: <code>ln -s ~/app-ratings-reviews/menu.sh /usr/local/bin/bew</code> oder <code>echo "alias bew='~/app-ratings-reviews/menu.sh'" &gt;&gt; ~/.zshrc</code>. Eigener Editor für Markdown: <code>MD_EDITOR</code>, sonst <code>VISUAL</code> oder <code>EDITOR</code>.</p>
   </section>
 
   <section class="card" id="betrieb">
     <h2>Täglicher Lauf, Bereitstellung, Backup</h2>
     <ul>
-      <li><b>Zeitplan:</b> <code>./ratings.sh daily</code> einmal täglich. cron: <code>30 6 * * * cd /home/ratings/app-ratings-reviews &amp;&amp; ./ratings.sh daily &gt;&gt; logs-daily.txt 2&gt;&amp;1</code>. Fertige systemd-Units und die Varianten Mac, Windows und GitHub Actions stehen in <code>BETRIEB.md</code>.</li>
+      <li><b>Zeitplan:</b> <code>./ratings.sh daily</code> einmal täglich (Abruf, Bericht, zuletzt die Benachrichtigung). cron: <code>30 6 * * * cd /home/ratings/app-ratings-reviews &amp;&amp; ./ratings.sh daily &gt;&gt; logs-daily.txt 2&gt;&amp;1</code>. Fertige systemd-Units und die Varianten Mac, Windows und GitHub Actions stehen in <code>BETRIEB.md</code>.</li>
       <li><b>Bereitstellung:</b> <code>reports/</code> ist statisch und ohne externe Abhängigkeiten. Per Webserver mit Passwort oder VPN freigeben, oder den Ordner auf ein Netzlaufwerk legen (<code>reportDirectory</code>). Nur <code>reports/</code> freigeben, nie <code>config/</code>, <code>data/</code> oder <code>keys/</code>.</li>
       <li><b>Versand:</b> <code>./ratings.sh markdown</code> erzeugt je App eine Zusammenfassung der letzten 14 Tage und ein ZIP.</li>
       <li><b>Backup:</b> <code>./ratings.sh backup</code> packt <code>data/</code>; zusätzlich <code>config/</code> und <code>keys/</code> in die Serversicherung aufnehmen.</li>
       <li><b>Verantwortung:</b> jemand sieht bei Status „Fehler“ im Log nach; meist ist ein Schlüssel widerrufen oder abgelaufen.</li>
+    </ul>
+  </section>
+
+  <section class="card" id="benachrichtigung">
+    <h2>Benachrichtigung (optional)</h2>
+    <p>Damit niemand den Bericht täglich öffnen muss: Am Ende von <code>./ratings.sh daily</code> schickt das Programm eine knappe Nachricht per E-Mail, Slack oder Webhook, aber nur, wenn seit der letzten Nachricht etwas passiert ist. Nichts Neues, keine Nachricht.</p>
+    <ul>
+      <li><b>Auslöser:</b> neue Rezensionen mit ein oder zwei Sternen (mit Kurzsatz der KI, falls die Analyse läuft), Ampelwechsel einer App (gelb, rot oder zurück auf grün, mit den Gründen wie im Bericht), Sprung der Absturzrate. Jeder einzeln abschaltbar (<code>notify.triggers</code>).</li>
+      <li><b>Einschalten:</b> Block <code>notify</code> in <code>config/config.json</code> (Vorlage in <code>config.example.json</code>), <code>enabled: true</code> und beim Kanal ebenfalls; <code>settings.reportUrl</code> liefert den Link in der Nachricht. Passwort, Webhook-Adresse und Signaturschlüssel nur als Umgebungsvariablen des Zeitplaners, nie in der Datei.</li>
+      <li><b>Kanäle:</b> E-Mail über SMTP (STARTTLS oder SSL), Slack Incoming Webhook, generischer Webhook (JSON per POST, optional signiert mit <code>X-Ratings-Signature</code>). Alle freigeschalteten Kanäle werden bedient.</li>
+      <li><b>Verhalten:</b> Der erste Lauf meldet nichts, er merkt sich nur den Stand (<code>data/notify-state.json</code>). Jeder Vorfall wird nur einmal gemeldet, auch wenn <code>daily</code> mehrmals läuft. Kann kein Kanal zustellen, meldet der nächste Lauf dieselben Vorfälle erneut.</li>
+      <li><b>Prüfen:</b> <code>./ratings.sh notify --test</code> schickt eine Testnachricht an alle Kanäle; <code>./ratings.sh notify --dry-run</code> zeigt, was der nächste Lauf melden würde (Menü: Status und Übersicht → Benachrichtigung ansehen oder testen). Beides auch im Menü unter „Status und Übersicht“.</li>
+      <li><b>Datenschutz:</b> Die Nachricht enthält Rezensionsauszüge (Sterne, Datum, Land, Titel, Text gekürzt); die Empfänger gehören in die Firma. Nutzernamen kommen nicht vor. Für die KI-Sätze wird keine neue Anfrage gestellt. Alles Weitere steht in <code>BENACHRICHTIGUNG.md</code>.</li>
     </ul>
   </section>
 
@@ -232,7 +314,7 @@ mkdir -p keys &amp;&amp; chmod 700 keys &amp;&amp; chmod 600 config/config.json
       <div class="step"><b>2. Apple access</b><span>Team key (.p8), Issuer ID, Key ID, app IDs, analytics report request.</span></div>
       <div class="step"><b>3. Google access</b><span>Android only: service account (JSON), invite it to the Play Console, package names.</span></div>
       <div class="step"><b>4. Configure</b><span><code>config/config.json</code>: customers, credentials, apps. Keys go to <code>keys/</code>.</span></div>
-      <div class="step"><b>5. Verify</b><span><code>./ratings.sh apps</code>, <code>dry-run</code>, then <code>fetch</code>, <code>stability</code>, <code>testdata</code>, <code>report</code>.</span></div>
+      <div class="step"><b>5. Verify</b><span><code>./ratings.sh apps</code>, <code>dry-run</code>, then <code>fetch</code>, <code>stability</code>, <code>store</code>, <code>testdata</code>, <code>report</code>.</span></div>
       <div class="step"><b>6. Automate</b><span>Daily <code>./ratings.sh daily</code> via cron or systemd; publish the report; back up.</span></div>
     </div>
   </section>
@@ -268,7 +350,7 @@ mkdir -p keys &amp;&amp; chmod 700 keys &amp;&amp; chmod 600 config/config.json
       <tr><td>Issuer ID</td><td>UUID, e.g. <code>11111111-2222-3333-4444-555555555555</code></td><td><code>credentials.apple.issuerId</code></td></tr>
       <tr><td>Key ID</td><td>10 characters, e.g. <code>ABC123DEFG</code>, part of the .p8 file name</td><td><code>credentials.apple.keyId</code></td></tr>
       <tr><td>Private key</td><td>File <code>AuthKey_ABC123DEFG.p8</code> (text, starts with <code>-----BEGIN PRIVATE KEY-----</code>)</td><td><code>credentials.apple.privateKeyFile</code> (path) or <code>privateKeyEnvironmentVariable</code> (name of an environment variable holding a path or the key text)</td></tr>
-      <tr><td>App ID</td><td>Number, e.g. <code>1540650069</code></td><td><code>apps[].platforms.apple.appId</code></td></tr>
+      <tr><td>App ID</td><td>Number, e.g. <code>1234567890</code></td><td><code>apps[].platforms.apple.appId</code></td></tr>
     </tbody></table></div>
     <p class="note">The tool creates a short-lived token itself from Issuer ID, Key ID and key (ES256, 15 minutes). Nothing has to be generated by hand. All calls are read-only. The key text must never be placed in <code>config.json</code>; the tool rejects that.</p>
   </section>
@@ -302,7 +384,7 @@ mkdir -p keys &amp;&amp; chmod 700 keys &amp;&amp; chmod 600 config/config.json
         "google": { "serviceAccountFile": "./keys/customer-a-google.json" }
       },
       "apps": [
-        { "id": "my-app", "name": "My App", "enabled": true, "platforms": {
+        { "id": "my-app", "name": "My App", "enabled": true, "audience": 250000, "platforms": {
             "apple":  { "enabled": true, "appId": "1234567890", "countries": [], "ratingCountries": ["DE"] },
             "google": { "enabled": false, "packageName": "de.firma.app", "languages": [] } } }
       ]
@@ -312,6 +394,9 @@ mkdir -p keys &amp;&amp; chmod 700 keys &amp;&amp; chmod 600 config/config.json
     <ul>
       <li><b>Separate <code>credentials</code> per customer</b>, because Apple keys are bound to the developer account. Several customers under one account: enter the same key for each. One Google service account can be invited to several Play Consoles.</li>
       <li><b><code>ratingCountries</code>:</b> countries for which the official store rating is fetched (one request per app and country per run; <code>[]</code> = off). Leave <code>countries</code> (Apple) and <code>languages</code> (Google) empty for all.</li>
+      <li><b><code>audience</code> (optional):</b> size of the app’s target group, for example the provider’s number of customers. Only with it does the report show “downloads per 1,000 of target group”; without it the column stays empty.</li>
+      <li><b><code>competitors</code> (optional, per customer):</b> third-party Apple apps analysed next to your own, without credentials: per entry <code>id</code>, <code>name</code>, optional <code>vendor</code>, plus <code>apple.appId</code> (from the App Store link) and <code>apple.countries</code> (required, e.g. <code>["DE"]</code>). Source: Apple’s public review feed (newest 500 reviews per country) and iTunes Lookup. Apple only; Google offers no public source. Without entries nothing about it appears in the report; with entries there is a “Competitors” tab and the app filter lists them with the prefix “Competitor:”.</li>
+      <li><b><code>config/themen.json</code> (versioned, no secrets):</b> word lists for the “Topics and words” section of the report. Per topic <code>id</code>, name <code>de</code>/<code>en</code>, kind (<code>problem</code>, <code>wunsch</code>, <code>lob</code>, <code>bedienung</code>, <code>thema</code>), optional <code>bereich</code> (<code>app</code> or <code>anbieter</code>, for the question “Is it the app or the provider?”) and <code>terms</code> (lower-case terms; matched at the start of a word, up to three characters only as a whole word, <code>*</code> in front also inside a word, <code>=</code> in front only as a whole word) plus optional <code>nicht</code> (phrases in which a hit does not count, such as “keine Fehler”). Add terms and rebuild the report; matching runs in the browser without any API call.</li>
       <li><b>Environment variables instead of files:</b> <code>privateKeyEnvironmentVariable</code> and <code>serviceAccountEnvironmentVariable</code> name the variable (content: path or key text). Handy for CI.</li>
     </ul>
     <div class="tablewrap" style="max-height:none"><table><thead><tr><th>Setting</th><th>Meaning</th><th>Default</th></tr></thead><tbody>
@@ -334,6 +419,7 @@ mkdir -p keys &amp;&amp; chmod 700 keys &amp;&amp; chmod 600 config/config.json
       <tr><td><code>keys/*-google.json</code></td><td>Google service account key per customer</td><td><code>600</code>, never in the repository</td></tr>
       <tr><td><code>~/.zshrc</code> or <code>/usr/local/bin/bew</code></td><td>optional: alias or symlink to <code>menu.sh</code> so the menu starts from anywhere</td><td></td></tr>
       <tr><td><code>crontab</code> or systemd unit</td><td>daily run (see Operation)</td><td></td></tr>
+      <tr><td>environment variables of the scheduler</td><td>optional: AI key, SMTP password or webhook address for the notification; never in <code>config.json</code></td><td></td></tr>
     </tbody></table></div>
     <p class="note">The tool itself creates <code>data/</code> (reviews as JSON, kept permanently), <code>reports/index.html</code> (report), <code>reports/hilfe.html</code>, <code>impressum.html</code>, <code>datenschutz.html</code> (these pages), <code>reports/markdown/</code> (summaries) and <code>backups/</code> (before deleting). None of it is in the repository. Nothing is ever deleted except deliberately via <code>./ratings.sh reset</code> with backup and confirmation <code>LOESCHEN</code>.</p>
   </section>
@@ -350,8 +436,17 @@ mkdir -p keys &amp;&amp; chmod 700 keys &amp;&amp; chmod 600 config/config.json
       <tr><td><code>range FROM TO [opt]</code> (zeitraum)</td><td>only this period (YYYY-MM-DD)</td></tr>
       <tr><td><code>stability [opt]</code> (stabilitaet)</td><td>crashes and sessions from Apple Analytics (first run 100 to 150 requests per app)</td></tr>
       <tr><td><code>testdata [opt]</code> (testbetrieb)</td><td>Apple TestFlight and Google test tracks</td></tr>
-      <tr><td><code>all [opt]</code> (alles)</td><td>fetch reviews, stability and testing, build the report, open the browser</td></tr>
-      <tr><td><code>daily [opt]</code> (taeglich)</td><td>for cron and CI: fetch at most once per day, report always rebuilt</td></tr>
+      <tr><td><code>competitors [opt]</code> (wettbewerber)</td><td>fetch competitor apps from <code>customers[].competitors</code> via Apple’s public review feed and iTunes Lookup, no credentials (Apple only, newest 500 reviews per country); without entries only a hint</td></tr>
+      <tr><td><code>all [opt]</code> (alles)</td><td>fetch reviews, stability, testing, competitors (Apple only, if configured) and (if a provider is enabled) the AI analysis, build the report, open the browser</td></tr>
+      <tr><td><code>analyze [opt]</code> (ki)</td><td>AI analysis of the stored reviews: only new items are sent, then the report is rebuilt; needs an enabled provider (see AI analysis)</td></tr>
+      <tr><td><code>ask "question" [opt]</code> (frage)</td><td>free-text question to the reviews of the selection, answer with evidence; only with <code>ai.features.questions</code>. Selection: <code>--customer</code>, <code>--app</code> (repeatable), <code>--platform</code>, <code>--from</code>, <code>--to</code>, <code>--stars-min</code>, <code>--stars-max</code>; in the report the whole filter selection applies</td></tr>
+      <tr><td><code>ai-themes [--accept NR | --ignore NR]</code> (ki-themen)</td><td>show, adopt or reject the AI’s topic suggestions</td></tr>
+      <tr><td><code>ai-usage</code> (ki-verbrauch)</td><td>active provider and tokens per month, no network</td></tr>
+      <tr><td><code>ai-report [opt]</code> (ki-bericht)</td><td>one command: start the local question service, rebuild the report, open it in the browser; runs until Ctrl+C, meanwhile you can ask directly under “Questions to the data”</td></tr>
+      <tr><td><code>ai-serve [--port N]</code> (ki-dienst)</td><td>the question service alone (127.0.0.1); rebuild the report yourself</td></tr>
+      <tr><td><code>ai-questions [--delete NR | --clear]</code> (ki-fragen)</td><td>list stored questions numbered, delete one or all; no network</td></tr>
+      <tr><td><code>daily [opt]</code> (taeglich)</td><td>for cron and CI: fetch at most once per day, report always rebuilt, then the notification (if enabled)</td></tr>
+      <tr><td><code>notify [--dry-run | --test]</code> (benachrichtigen)</td><td>notification after the daily run (new 1–2 ★, status change, crash jump) via e-mail, Slack or webhook; <code>--dry-run</code> shows the message, <code>--test</code> sends a test message; reads <code>data/</code> only, no store network (see Notification)</td></tr>
       <tr><td><code>report</code> (bericht) / <code>open</code> (oeffnen)</td><td>build and open the report / only open it. <code>report --customer ID</code> builds a report for that customer only</td></tr>
       <tr><td><code>markdown</code></td><td>Markdown summaries plus ZIP for sending</td></tr>
       <tr><td><code>status</code> / <code>apps</code></td><td>status per app / configured apps, both without network</td></tr>
@@ -371,38 +466,107 @@ mkdir -p keys &amp;&amp; chmod 700 keys &amp;&amp; chmod 600 config/config.json
     <p class="note">Exit codes: 0 all fine, 1 at least one target failed or partial, 2 configuration or usage error. Without the wrapper: <code>python collect.py [options]</code> and <code>python report.py [--customer ID] [--app ID] [--platform P]</code>.</p>
   </section>
 
+  <section class="card" id="report">
+    <h2>The report</h2>
+    <p>A single HTML file (<code>reports/index.html</code>) that works offline. The filter sits at the top (customer, app, platform, period, full-text search; “Advanced” with language, country, version, operating system, device, topic, stars, developer reply, from/to); everything below follows it. Clicking “App-Feedback” at the top left takes you to the overview at the top of the page. Language (DE/EN) and light/dark at the top right; every section has a red <b>i</b> with an explanation and an arrow to collapse it.</p>
+    <div class="tablewrap" style="max-height:none"><table><thead><tr><th>Tab</th><th>Content</th></tr></thead><tbody>
+      <tr><td>Overview</td><td>three answers (how is it going, what stands out, what did the latest update change), “What we should do” (with AI), traffic light per app; “Show more figures” opens questions and answers, key figures per app, comparison by version and all updates</td></tr>
+      <tr><td>Reviews</td><td>average from the reviews, key figures, “Topics and words” (with AI three buttons as overlays), the reviews themselves with a detail view, “Support replies” (with AI reply drafts)</td></tr>
+      <tr><td>Stability</td><td>crashes and sessions by version, system, device, weekly trend (Apple only)</td></tr>
+      <tr><td>Downloads &amp; store</td><td>apps compared (with the app report to print), stars in the App Store, latest version in the store</td></tr>
+      <tr><td>Charts</td><td>nineteen charts, selection box, arrows, enlarge</td></tr>
+      <tr><td>Competitors</td><td>only with configured competitors (see below)</td></tr>
+      <tr><td>AI questions</td><td>only while the question service runs: type a question or pick one of 20 prepared ones, stored answers with evidence</td></tr>
+      <tr><td>Data status</td><td>how complete the data is: limits of the sources, last fetch per app, gaps</td></tr>
+    </tbody></table></div>
+    <h3>Print and clipboard</h3>
+    <ul>
+      <li><b>Per tab:</b> at the top of the card (overview, topics and words, stability, downloads &amp; store, charts) sit “Print report” (in the overview “Print monthly report”: last 30 days with situation, traffic light, actions, with AI what users say) and “Copy to clipboard”. The topics report holds the overall rating, key figures and the topics for all and for negative reviews (with AI the most requested features); the charts report ten charts, marked “iOS only/Android only” when a platform is missing.</li>
+      <li><b>Full report:</b> “Print report” and “Copy to clipboard” next to “Reset filters” print all available reports grouped by tab. If AI questions are stored, the report asks first whether to include them; “No” leaves the block out.</li>
+      <li><b>Every printout</b> starts with date and time and the filter in use. In the print dialog choose “Save as PDF”: the file name is suggested, for example <code>Monthly-report-BKK-Linden-20261025-233856</code>. Without AI no printout contains AI texts.</li>
+      <li><b>Clipboard:</b> the same report with formatting, charts as images, to paste into Word, Outlook, Teams or Jira (in Jira and Teams image handling depends on the editor). For every AI question the button next to “Delete” copies question, answer and evidence as text.</li>
+      <li><b>Reset</b> (to the right) clears the filter after a confirmation and deletes all stored AI questions; on disk only while the question service runs, otherwise a note appears.</li>
+    </ul>
+  </section>
+
+  <section class="card" id="ki-en">
+    <h2>AI analysis (optional)</h2>
+    <p>In addition to the figures, a language model can read the reviews: a three-sentence summary per app with quotes as evidence, sentiment and urgency per review (including where the stars mislead), freely detected topics with suggestions for <code>config/themen.json</code>, clusters by version, a comparison of the apps, reply drafts for open 1–2 star reviews and free-text questions. Plus a list of measures per app (owner, impact, share of affected negative reviews), the most requested features and an effect check per update. There is no separate AI tab: each AI text sits in the section that answers the question (overview “What we should do” and “What do users say?”, Reviews tab, “Topics and words”, “Support replies”, “Apps compared”, “What an update changed”); only “Questions to the data” has its own tab “AI questions”.</p>
+    <p><b>Enabling:</b> copy the <code>ai</code> block from <code>config.example.json</code> into <code>config/config.json</code>. The AI is active only if a provider in <code>ai.providers</code> has <code>"enabled": true</code> <b>and</b> the environment variable named in <code>apiKeyEnvironmentVariable</code> contains a key (for example <code>export ANTHROPIC_API_KEY=…</code>). If several are enabled, the first in the list wins; to switch, change the order or <code>enabled</code>. Providers: <code>openai</code>, <code>gemini</code>, <code>anthropic</code>, <code>perplexity</code>, <code>xai</code> (cloud) or <code>local</code> (a local model on your own computer, no key, free of charge, e.g. Ollama or LM Studio; for Ollama install it, <code>ollama pull llama3.1:8b</code>, enable the provider; setup and model choice in <code>KI.md</code>); the model per provider is free to choose (<code>model</code>). Without an active provider there is neither the command nor any AI content in the report.</p>
+    <p><b>Cost:</b> only new or changed reviews are sent. <code>monthlyTokenLimit</code> is a hard brake per calendar month; <code>./ratings.sh ai-usage</code> shows the usage. Free-text questions (<code>ai.features.questions</code>) are off by default because each question costs one request. Prices are listed by the provider; the tool stores none.</p>
+    <p><b>Privacy:</b> review text and title (can be switched off: <code>sendReviewText: false</code>), stars, date, app version, language, country and app name are sent; never user names, review IDs, credentials or store figures. Every AI statement carries the “AI” mark and names provider, model and date. Quotes are checked against the original text; reply drafts are never sent, only shown for copying. Details in the privacy policy, section 4a.</p>
+    <p><b>Asking right in the report:</b> <code>./ratings.sh ai-report</code> does it all in one step: start the service, build the report, open the browser. Underneath, <code>./ratings.sh ai-serve</code> starts a small service reachable only on this computer (127.0.0.1). If the report is generated while it runs, an input field appears on the “AI questions” tab, next to it “Choose a question …” with 20 ready-made questions from <code>config/fragen.json</code> (editable; one click asks at once); the report may then address exactly this port, otherwise it makes no network requests at all. Protection: random token per start, allowed browser origins only, requests capped at 4 KB, the same budget as elsewhere. Ctrl+C stops the service; the report published on the server cannot ask questions.</p>
+<pre><code>./ratings.sh analyze                   # all apps, only new items are sent
+./ratings.sh analyze --dry-run         # only shows what would be sent
+./ratings.sh ask "Which apps mention the bonus programme?" --customer kasse-nord
+./ratings.sh ai-themes                 # numbered suggestions; --accept 2 adopts, --ignore 2 rejects
+./ratings.sh ai-usage                  # provider, reason per provider, tokens per month
+./ratings.sh ai-questions              # stored questions; --delete NR or --clear deletes
+./ratings.sh ai-models                 # supported models per provider with list prices</code></pre>
+    <p><b>In the report:</b> every AI text carries the “KI” mark. They appear in the overview (“What we should do”, “What do users say?”), in the reviews (sentiment strip, tiles, three buttons under “Topics and words”, reply drafts), in “Apps compared” and “What an update changed”, and on the “AI questions” tab. Printouts contain them only with AI enabled; the full report asks first whether to include the stored AI questions. Menu: main menu item 9 (AI analysis) and item 5 (report with question service), short menu item 4.</p>
+  </section>
+
+  <section class="card" id="competitors">
+    <h2>Competitors (optional, Apple only)</h2>
+    <p>Third-party Apple apps can be evaluated next to your own, without credentials: the tool reads Apple’s public review feed (newest 500 reviews per country) and the iTunes Lookup (store rating, total ratings, version). Google has no public route.</p>
+    <ul>
+      <li><b>Setting up:</b> in <code>config/config.json</code> the <code>competitors</code> block per customer (template in <code>config.example.json</code>): per entry <code>id</code>, <code>name</code>, optional <code>vendor</code>, plus <code>apple.appId</code> from the App Store link and the countries. Without entries nothing in the report changes.</li>
+      <li><b>Fetching:</b> <code>./ratings.sh competitors</code>, included in <code>all</code> and <code>daily</code>; menu: Fetch data → Competitors.</li>
+      <li><b>In the report:</b> own tab “Competitors” with a table (vendor, store rating, total ratings, reviews of the last 90 days, traffic light by the same rules) and a profile per app; with AI, what users praise and criticise. The tab follows the customer in the filter. Competitors never count anywhere else: not in the overview, not in printouts, not in the notification.</li>
+      <li><b>Privacy:</b> only review texts and figures from the public feed are stored, no user names; with AI these texts go to the provider as well.</li>
+    </ul>
+  </section>
+
   <section class="card">
     <h2>The two menus</h2>
     <p>Both start from any folder, set up the <code>.venv</code> on first use and report a missing <code>config.json</code>. Keys: number = select, <code>H</code> = help for the current menu, <code>0</code> = one level back, <code>Q</code> = quit. The top shows the last successful fetch, the age of the report and the current selection. Each command is shown before it runs; after output the menu waits for Enter.</p>
     <h3>Main menu: <code>menu.sh</code> (or <code>./ratings.sh menu</code>)</h3>
     <div class="tablewrap" style="max-height:none"><table><thead><tr><th>No.</th><th>Item</th><th>Effect</th></tr></thead><tbody>
-      <tr><td>1</td><td>Everything at once</td><td>fetch reviews and stability, build the report, open the browser</td></tr>
-      <tr><td>2</td><td>Fetch data</td><td>automatic, full, ignore waiting period, stability, testing, both, trial run, period; toggle “open report afterwards”</td></tr>
+      <tr><td>1</td><td>Everything at once</td><td>fetch reviews, stability, store figures, testing and competitors (if configured), analyse with AI if enabled, build the report, open the browser</td></tr>
+      <tr><td>2</td><td>Fetch data …</td><td>automatic, full, ignore waiting period, stability, store figures, testing, competitors (Apple only), everything, trial run, period; toggle “open report afterwards”</td></tr>
       <tr><td>3</td><td>Build and open report</td><td>with the current selection (customer, app, platform)</td></tr>
       <tr><td>4</td><td>Open last report only</td><td>without rebuilding</td></tr>
-      <tr><td>5</td><td>Change selection</td><td>customer, app, platform, period; applies to all fetches and reports</td></tr>
-      <tr><td>6</td><td>Status and overview</td><td>status per app, configured apps, tests</td></tr>
-      <tr><td>7</td><td>Import Google CSV</td><td>Play Console export; choose customer and app under 5 first</td></tr>
-      <tr><td>8</td><td>Markdown files</td><td>open documentation and 14-day summaries in the browser or editor, rebuild, ZIP for sending</td></tr>
-      <tr><td>9</td><td>Delete data and start over</td><td>selection only or everything; always backup and confirmation; configuration and keys remain</td></tr>
+      <tr><td>5</td><td>Report with AI question service</td><td>start the service, rebuild and open the report (<code>ai-report</code>); ask right in the report; Ctrl+C stops; only with an enabled provider</td></tr>
+      <tr><td>6</td><td>Change selection …</td><td>customer, app, platform, period, reset all; applies to all fetches and reports</td></tr>
+      <tr><td>7</td><td>Status and overview …</td><td>status per app, configured apps, tests, preview or test the notification</td></tr>
+      <tr><td>8</td><td>Import Google CSV</td><td>Play Console export; choose customer and app under 6 first</td></tr>
+      <tr><td>9</td><td>AI analysis …</td><td>analyse, trial run, ask a question, view stored questions, adopt or reject theme suggestions, provider and usage, start the question service; only with an enabled provider</td></tr>
+      <tr><td>10</td><td>Markdown files …</td><td>open documentation and 14-day summaries in the browser or editor, rebuild, ZIP for sending</td></tr>
+      <tr><td>11</td><td>Delete data and start over …</td><td>selection only or everything, dry run; always backup and confirmation; configuration and keys remain</td></tr>
     </tbody></table></div>
     <h3>Short menu: <code>kurzmenu.sh</code></h3>
     <div class="tablewrap" style="max-height:none"><table><thead><tr><th>No.</th><th>Item</th><th>Effect</th></tr></thead><tbody>
       <tr><td>1</td><td>Fetch everything</td><td>reviews, stability and testing, then rebuild report and Markdown (no ZIP, no browser)</td></tr>
       <tr><td>2</td><td>Status</td><td>status per app, without network</td></tr>
       <tr><td>3</td><td>Show report</td><td>open in the browser; built if missing</td></tr>
+      <tr><td>4</td><td>Show report with AI questions</td><td>start the local question service, rebuild and open the report (<code>ai-report</code>); runs until Ctrl+C, only with an enabled AI provider. In the main menu this is item 5</td></tr>
     </tbody></table></div>
+    <h3>Short menu in debug mode: <code>kurzmenudebug.sh</code></h3>
+    <p>Same three items, but only with fictional test data (<code>config/config.debug.json</code>, <code>data-debug/</code>, <code>reports-debug/</code>). No request is sent to Apple or Google; real data and report stay untouched. <code>1</code> deletes the test data and generates new: categories (health insurers with 30 apps from one software house, games, navigation, sports, AI, news, finance, travel, office), volume (few, medium, many, very many), period (3 to 24 months) and reviews per app as a range; then the report is built. If an AI provider is enabled, the menu asks whether the AI analysis should run on the test data (costs requests). Command line: <code>./ratings.sh demo --list-categories</code>, <code>./ratings.sh demo --categories krankenkassen --volume viele --months 12 --reviews 50-400</code>.</p>
     <p class="note">Shortcut so that <code>bew</code> starts the menu from anywhere: <code>ln -s ~/app-ratings-reviews/menu.sh /usr/local/bin/bew</code> or <code>echo "alias bew='~/app-ratings-reviews/menu.sh'" &gt;&gt; ~/.zshrc</code>. Own editor for Markdown: <code>MD_EDITOR</code>, otherwise <code>VISUAL</code> or <code>EDITOR</code>.</p>
   </section>
 
   <section class="card">
     <h2>Daily run, publishing, backup</h2>
     <ul>
-      <li><b>Schedule:</b> <code>./ratings.sh daily</code> once a day. cron: <code>30 6 * * * cd /home/ratings/app-ratings-reviews &amp;&amp; ./ratings.sh daily &gt;&gt; logs-daily.txt 2&gt;&amp;1</code>. Ready-made systemd units and the Mac, Windows and GitHub Actions variants are in <code>BETRIEB.md</code>.</li>
+      <li><b>Schedule:</b> <code>./ratings.sh daily</code> once a day (fetch, report, then the notification). cron: <code>30 6 * * * cd /home/ratings/app-ratings-reviews &amp;&amp; ./ratings.sh daily &gt;&gt; logs-daily.txt 2&gt;&amp;1</code>. Ready-made systemd units and the Mac, Windows and GitHub Actions variants are in <code>BETRIEB.md</code>.</li>
       <li><b>Publishing:</b> <code>reports/</code> is static with no external dependencies. Serve it via a web server with a password or VPN, or put the folder on a network share (<code>reportDirectory</code>). Share only <code>reports/</code>, never <code>config/</code>, <code>data/</code> or <code>keys/</code>.</li>
       <li><b>Sending:</b> <code>./ratings.sh markdown</code> creates a 14-day summary per app and a ZIP.</li>
       <li><b>Backup:</b> <code>./ratings.sh backup</code> packs <code>data/</code>; also include <code>config/</code> and <code>keys/</code> in the server backup.</li>
       <li><b>Responsibility:</b> someone checks the log when a status says “failed”; usually a key was revoked or expired.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>Notification (optional)</h2>
+    <p>So nobody has to open the report every day: at the end of <code>./ratings.sh daily</code> the tool sends a short message via e-mail, Slack or webhook, but only when something happened since the last message. Nothing new, no message.</p>
+    <ul>
+      <li><b>Triggers:</b> new reviews with one or two stars (with the AI’s one-line summary if the analysis runs), a status change of an app (yellow, red or back to green, with the reasons as in the report), a jump in the crash rate. Each can be switched off (<code>notify.triggers</code>).</li>
+      <li><b>Enabling:</b> block <code>notify</code> in <code>config/config.json</code> (template in <code>config.example.json</code>), <code>enabled: true</code> and the same on the channel; <code>settings.reportUrl</code> provides the link in the message. Password, webhook address and signing secret only as environment variables of the scheduler, never in the file.</li>
+      <li><b>Channels:</b> e-mail via SMTP (STARTTLS or SSL), Slack incoming webhook, generic webhook (JSON via POST, optionally signed with <code>X-Ratings-Signature</code>). All enabled channels are served.</li>
+      <li><b>Behaviour:</b> the first run reports nothing, it only remembers the state (<code>data/notify-state.json</code>). Every incident is reported once, even if <code>daily</code> runs several times. If no channel could deliver, the next run reports the same incidents again.</li>
+      <li><b>Checking:</b> <code>./ratings.sh notify --test</code> sends a test message to all channels; <code>./ratings.sh notify --dry-run</code> shows what the next run would report. Both also in the menu under “Status and overview”.</li>
+      <li><b>Privacy:</b> the message contains review excerpts (stars, date, country, title, shortened text); recipients belong to the company. User names never appear. No new AI request is made for the AI lines. Everything else is in <code>BENACHRICHTIGUNG.md</code>.</li>
     </ul>
   </section>
 
