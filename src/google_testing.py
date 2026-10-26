@@ -19,8 +19,8 @@ import logging
 from datetime import date, timedelta
 from urllib.parse import quote
 
-from .auth import GoogleTokenProvider
-from .errors import AuthError
+from .auth import authorized_json
+from .errors import ToolError
 from .google import BASE, GoogleClient
 
 log = logging.getLogger("arr.googletesting")
@@ -29,44 +29,31 @@ METRICS = ("crashRate", "userPerceivedCrashRate", "distinctUsers")
 WINDOW_DAYS = 30
 
 
-def _call(client: GoogleClient, tokens: GoogleTokenProvider, method: str, url: str, params: dict | None = None,
-          json_body: dict | None = None) -> dict:
-    for attempt in (0, 1):
-        try:
-            return client.http.request_json(method, url, {"Authorization": f"Bearer {tokens.token()}"}, params,
-                                            json_body=json_body)
-        except AuthError:
-            if attempt:
-                raise
-            tokens.invalidate()
-    raise AuthError("Authentifizierung fehlgeschlagen.")  # pragma: no cover
-
-
 def fetch_tracks(client: GoogleClient, package: str) -> list[dict]:
     """Testspuren mit Releases. Legt einen Edit an und löscht ihn in jedem Fall wieder."""
     base = f"{BASE}/{quote(package, safe='.')}/edits"
-    edit = _call(client, client.tokens, "POST", base, json_body={})
+    edit = authorized_json(client.http, client.tokens, "POST", base, json_body={})
     edit_id = edit.get("id")
     if not edit_id:
         return []
     try:
-        body = _call(client, client.tokens, "GET", f"{base}/{edit_id}/tracks")
+        body = authorized_json(client.http, client.tokens, "GET", f"{base}/{edit_id}/tracks")
     finally:
         try:
-            _call(client, client.tokens, "DELETE", f"{base}/{edit_id}")
-        except Exception as exc:  # Aufräumen darf den Abruf nicht kippen
+            authorized_json(client.http, client.tokens, "DELETE", f"{base}/{edit_id}")
+        except ToolError as exc:  # Aufräumen darf den Abruf nicht kippen
             log.warning("Edit %s konnte nicht gelöscht werden: %s", edit_id, type(exc).__name__)
     out = []
-    for t in body.get("tracks", []):
-        releases = [{"name": r.get("name"), "status": r.get("status"),
-                     "versionCodes": [str(v) for v in r.get("versionCodes", [])], "userFraction": r.get("userFraction")}
-                    for r in t.get("releases", [])]
-        out.append({"track": t.get("track"), "releases": releases})
+    for track in body.get("tracks", []):
+        releases = [{"name": release.get("name"), "status": release.get("status"),
+                     "versionCodes": [str(code) for code in release.get("versionCodes", [])], "userFraction": release.get("userFraction")}
+                    for release in track.get("releases", [])]
+        out.append({"track": track.get("track"), "releases": releases})
     return out
 
 
-def _ymd(d: date) -> dict:
-    return {"year": d.year, "month": d.month, "day": d.day}
+def _ymd(day: date) -> dict:
+    return {"year": day.year, "month": day.month, "day": day.day}
 
 
 def fetch_crash_rates(client: GoogleClient, package: str, today: date) -> list[dict]:
@@ -80,12 +67,12 @@ def fetch_crash_rates(client: GoogleClient, package: str, today: date) -> list[d
             "dimensions": ["versionCode"], "metrics": list(METRICS), "pageSize": 1000}
     out = []
     while True:
-        resp = _call(client, tokens, "POST", url, json_body=body)
+        resp = authorized_json(client.http, tokens, "POST", url, json_body=body)
         for row in resp.get("rows", []):
             start = row.get("startTime") or {}
-            version = next((d.get("stringValue") or str(d.get("int64Value")) for d in row.get("dimensions", [])
-                            if d.get("dimension") == "versionCode"), None)
-            values = {m.get("metric"): m.get("decimalValue", {}).get("value") for m in row.get("metrics", [])}
+            version = next((dim.get("stringValue") or str(dim.get("int64Value")) for dim in row.get("dimensions", [])
+                            if dim.get("dimension") == "versionCode"), None)
+            values = {metric.get("metric"): metric.get("decimalValue", {}).get("value") for metric in row.get("metrics", [])}
             if not start or version is None:
                 continue
             out.append({"id": f"{start.get('year')}-{int(start.get('month', 0)):02d}-{int(start.get('day', 0)):02d}|{version}",

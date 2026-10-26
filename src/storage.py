@@ -36,22 +36,40 @@ def read_json(path: Path, default: Any = None) -> Any:
         raise StorageError(f"Datei nicht lesbar: {path} ({exc.strerror})") from exc
 
 
-def write_json(path: Path, data: Any) -> None:
-    """Schreibt JSON atomar: temporäre Datei im Zielordner, fsync, dann os.replace."""
+@contextlib.contextmanager
+def atomic_target(path: Path) -> Iterator[Path]:
+    """Liefert den Pfad einer temporären Datei im Zielordner; nach erfolgreichem Schreiben ersetzt sie `path` mit `os.replace`.
+
+    Wer `path` gleichzeitig liest (Browser, Webserver, anderer Prozess), sieht immer entweder den alten oder den neuen, vollständigen
+    Inhalt, nie einen halben. Bei einem Fehler bleibt die alte Datei unverändert und die temporäre wird gelöscht. Rechte 0600.
+    - Parameter path: endgültiger Pfad der Datei.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
-    payload = json.dumps(data, ensure_ascii=False, indent=2, sort_keys=False) + "\n"
-    fd, tmp_name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
+    descriptor, tmp_name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
+    os.close(descriptor)
+    tmp = Path(tmp_name)
     try:
-        with os.fdopen(fd, "w", encoding="utf-8") as handle:
-            handle.write(payload)
-            handle.flush()
+        yield tmp
+        with tmp.open("rb") as handle:
             os.fsync(handle.fileno())
-        restrict_permissions(Path(tmp_name))
-        os.replace(tmp_name, path)
+        restrict_permissions(tmp)
+        os.replace(tmp, path)
     except BaseException:
         with contextlib.suppress(OSError):
-            os.unlink(tmp_name)
+            os.unlink(tmp)
         raise
+
+
+def write_text(path: Path, text: str) -> None:
+    """Schreibt eine Textdatei (UTF-8) atomar, siehe `atomic_target`. Für Bericht, Markdown und Textseiten."""
+    with atomic_target(path) as tmp:
+        tmp.write_text(text, encoding="utf-8")
+
+
+def write_json(path: Path, data: Any) -> None:
+    """Schreibt JSON atomar: temporäre Datei im Zielordner, fsync, dann os.replace."""
+    payload = json.dumps(data, ensure_ascii=False, indent=2, sort_keys=False) + "\n"
+    write_text(path, payload)
 
 
 def read_versioned(path: Path, schema_version: int, default_factory) -> dict:

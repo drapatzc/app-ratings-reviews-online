@@ -1,4 +1,7 @@
-"""HTTP-Client auf Basis der Standardbibliothek: Retries, Backoff, Retry-After, Zählung der Aufrufe."""
+"""HTTP-Client auf Basis der Standardbibliothek: Retries, Backoff, Retry-After, Zählung der Aufrufe.
+
+Nur HTTPS. Einzige Ausnahme (25.10.2026, lokale KI über Ollama): unverschlüsseltes http zu 127.0.0.1, localhost oder ::1,
+weil die Daten dort den Rechner nicht verlassen (`is_local_url`)."""
 from __future__ import annotations
 
 import json
@@ -20,11 +23,42 @@ log = logging.getLogger("arr.http")
 Transport = Callable[[str, str, dict, bytes | None, float], tuple[int, dict, bytes]]
 
 
+LOCAL_HOSTS = ("127.0.0.1", "localhost", "::1")
+
+
+def is_local_url(url: str) -> bool:
+    """True für http(s)-Adressen, deren Host der eigene Rechner ist (127.0.0.1, localhost, ::1)."""
+    try:
+        parts = urllib.parse.urlsplit(url)
+    except ValueError:
+        return False
+    return parts.scheme in ("http", "https") and (parts.hostname or "") in LOCAL_HOSTS
+
+
+def is_allowed_url(url: str) -> bool:
+    """https überall; http nur zum eigenen Rechner."""
+    return url.startswith("https://") or (url.startswith("http://") and is_local_url(url))
+
+
+class _NoAuthRedirect(urllib.request.HTTPRedirectHandler):
+    """Folgt Weiterleitungen nur ohne Authorization-Header und nur auf https. Sonst bleibt die 3xx-Antwort stehen.
+
+    urllib würde den Header sonst an das neue Ziel mitschicken, auch an einen fremden Host oder per http."""
+
+    def redirect_request(self, req, handle, code, msg, headers, newurl):
+        if req.has_header("Authorization") or not newurl.startswith("https://"):
+            return None
+        return super().redirect_request(req, handle, code, msg, headers, newurl)
+
+
+_OPENER = urllib.request.build_opener(_NoAuthRedirect)
+
+
 def default_transport(method: str, url: str, headers: dict, body: bytes | None, timeout: float):
-    """Echter HTTPS-Transport mit Zertifikatsprüfung (Standard-SSL-Kontext)."""
+    """Echter HTTPS-Transport mit Zertifikatsprüfung (Standard-SSL-Kontext), ohne Weiterleitung mit Token."""
     request = urllib.request.Request(url, data=body, headers=headers, method=method)
     try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310 - nur https-URLs
+        with _OPENER.open(request, timeout=timeout) as response:  # noqa: S310 - nur https-URLs
             return response.status, dict(response.headers), response.read()
     except urllib.error.HTTPError as exc:
         return exc.code, dict(exc.headers or {}), exc.read() or b""
@@ -51,8 +85,8 @@ class HttpClient:
     def request_json(self, method: str, url: str, headers: dict | None = None, params: dict | None = None,
                      form: dict | None = None, as_bytes: bool = False, json_body: dict | None = None) -> Any:
         """Sendet eine Anfrage und liefert das geparste JSON (oder mit as_bytes die rohen Bytes). 401/403 → AuthError, 429/5xx → Retry."""
-        if not url.startswith("https://"):
-            raise ApiError("Nur HTTPS-URLs sind erlaubt.")
+        if not is_allowed_url(url):
+            raise ApiError("Nur HTTPS-URLs sind erlaubt (http nur zu 127.0.0.1 oder localhost).")
         if params:
             url = f"{url}{'&' if '?' in url else '?'}{urllib.parse.urlencode(params, safe='[],')}"
         hdrs = {"Accept": "application/json", "User-Agent": "app-ratings-reviews/1.0", **(headers or {})}
@@ -85,6 +119,9 @@ class HttpClient:
                     return json.loads(raw.decode("utf-8")) if raw else {}
                 except (ValueError, UnicodeDecodeError) as exc:
                     raise ApiError("Ungültige JSON-Antwort der API.", status) from exc
+            if 300 <= status < 400:
+                raise ApiError(f"Weiterleitung (HTTP {status}) nicht erlaubt, Ziel: "
+                               f"{redact(resp_headers.get('Location') or resp_headers.get('location') or '?')}", status)
             if status in (401, 403):
                 raise AuthError(f"Zugriff verweigert (HTTP {status}). Zugangsdaten oder Berechtigungen prüfen.")
             if status == 429 or status >= 500:
@@ -118,4 +155,4 @@ class HttpClient:
         """Aktuelle Zählerstände (für Differenzen pro Ziel)."""
         return {"requests": self.request_count, "responses": self.response_count, "retries": self.retries,
                 "networkErrors": self.network_errors, "bytesIn": self.bytes_in,
-                "ok": sum(n for c, n in self.status_counts.items() if 200 <= c < 300)}
+                "ok": sum(count for code, count in self.status_counts.items() if 200 <= code < 300)}

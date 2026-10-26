@@ -16,8 +16,8 @@ from pathlib import Path
 from typing import Iterator
 from urllib.parse import parse_qs, quote, urlparse
 
-from .auth import GoogleTokenProvider
-from .errors import AuthError, ToolError
+from .auth import GoogleTokenProvider, authorized_json
+from .errors import ToolError
 from .http import HttpClient
 from .models import new_review, to_utc_iso
 
@@ -39,7 +39,7 @@ class GoogleClient:
         url = f"{BASE}/{quote(package_name, safe='.')}/reviews"
         params: dict | None = {"maxResults": PAGE_SIZE}
         while True:
-            body = self._get(url, params)
+            body = authorized_json(self.http, self.tokens, "GET", url, params)
             for item in body.get("reviews", []):
                 review = normalize_review(customer_id, app_id, package_name, item)
                 if review:
@@ -48,16 +48,6 @@ class GoogleClient:
             if not token:
                 break
             params = {"maxResults": PAGE_SIZE, "token": token}
-
-    def _get(self, url: str, params: dict | None) -> dict:
-        for attempt in (0, 1):
-            try:
-                return self.http.request_json("GET", url, {"Authorization": f"Bearer {self.tokens.token()}"}, params)
-            except AuthError:
-                if attempt:
-                    raise
-                self.tokens.invalidate()  # einmal mit frischem Token wiederholen
-        raise AuthError("Authentifizierung fehlgeschlagen.")  # pragma: no cover
 
 
 def split_title_text(text: str | None) -> tuple[str | None, str | None]:
@@ -80,8 +70,9 @@ def normalize_review(customer_id: str, app_id: str, package_name: str, item: dic
     """Wandelt ein Review-Objekt in das Modell um. authorName wird nicht gespeichert (Datenminimierung)."""
     review_id = item.get("reviewId")
     comments = item.get("comments") or []
-    user = next((c["userComment"] for c in comments if isinstance(c, dict) and "userComment" in c), None)
-    dev = next((c["developerComment"] for c in comments if isinstance(c, dict) and "developerComment" in c), None)
+    comments = [comment for comment in comments if isinstance(comment, dict)]
+    user = next((comment["userComment"] for comment in comments if "userComment" in comment), None)
+    dev = next((comment["developerComment"] for comment in comments if "developerComment" in comment), None)
     if not review_id or user is None:
         return None
     title, text = split_title_text(user.get("text"))
@@ -92,7 +83,7 @@ def normalize_review(customer_id: str, app_id: str, package_name: str, item: dic
     if dev:
         reply = {"text": dev.get("text"), "repliedAt": _comment_time(dev), "state": None}
     modified = _comment_time(user)
-    raw_user = {k: v for k, v in user.items() if k != "text"}
+    raw_user = {k: value for k, value in user.items() if k != "text"}
     return new_review(
         customer_id, app_id, "google", package_name, review_id,
         rating=user.get("starRating"), title=title, text=text, language=user.get("reviewerLanguage"),
@@ -101,7 +92,7 @@ def normalize_review(customer_id: str, app_id: str, package_name: str, item: dic
         operatingSystem="Android", osVersion=str(os_level) if os_level is not None else None,
         device=device, createdAt=modified, updatedAt=modified, developerReply=reply,
         raw={"reviewId": review_id, "userComment": raw_user,
-             **({"developerComment": {k: v for k, v in dev.items() if k != "text"}} if dev else {})})
+             **({"developerComment": {k: value for k, value in dev.items() if k != "text"}} if dev else {})})
 
 
 _REVIEW_ID_RE = re.compile(r"(?:reviewId|reviewid)=([^&\s]+)")
